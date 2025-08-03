@@ -180,7 +180,10 @@ private fun DirectoryPageBasic(state: ProjectCreatorState) {
         label = { Text(string(Strings.StarterNewSampleDirectory)) },
         singleLine = true,
         trailingIcon = {
-            IconButton(onClick = { state.pickSampleDirectory() }) {
+            IconButton(
+                modifier = Modifier.padding(end = 4.dp),
+                onClick = { state.pickSampleDirectory() },
+            ) {
                 Icon(Icons.Default.FolderOpen, null)
             }
         },
@@ -413,7 +416,10 @@ private fun DataSourcePageBasic(state: ProjectCreatorState) {
                 label = { Text(string(Strings.StarterNewInputFile, state.labeler.extension)) },
                 singleLine = true,
                 trailingIcon = {
-                    IconButton(onClick = { state.pickInputFile() }) {
+                    IconButton(
+                        modifier = Modifier.padding(end = 4.dp),
+                        onClick = { state.pickInputFile() },
+                    ) {
                         Icon(Icons.Default.FolderOpen, null)
                     }
                 },
@@ -560,7 +566,10 @@ private fun DirectoryPageAdvanced(state: ProjectCreatorState) {
         label = { Text(string(Strings.StarterNewWorkingDirectory)) },
         singleLine = true,
         trailingIcon = {
-            IconButton(onClick = { state.pickWorkingDirectory() }) {
+            IconButton(
+                modifier = Modifier.padding(end = 4.dp),
+                onClick = { state.pickWorkingDirectory() },
+            ) {
                 Icon(Icons.Default.FolderOpen, null)
             }
         },
@@ -573,7 +582,10 @@ private fun DirectoryPageAdvanced(state: ProjectCreatorState) {
         label = { Text(string(Strings.StarterNewCacheDirectory)) },
         singleLine = true,
         trailingIcon = {
-            IconButton(onClick = { state.pickCacheDirectory() }) {
+            IconButton(
+                modifier = Modifier.padding(end = 4.dp),
+                onClick = { state.pickCacheDirectory() },
+            ) {
                 Icon(Icons.Default.FolderOpen, null)
             }
         },

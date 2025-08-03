@@ -1,6 +1,7 @@
 package com.sdercolin.vlabeler.ui.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +29,7 @@ import androidx.compose.material.icons.filled.LinkOff
 import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
@@ -43,8 +46,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sdercolin.vlabeler.model.AppConf
 import com.sdercolin.vlabeler.model.Entry
+import com.sdercolin.vlabeler.model.LabelerConf
 import com.sdercolin.vlabeler.model.Project
 import com.sdercolin.vlabeler.ui.AppDialogState
+import com.sdercolin.vlabeler.ui.common.ContextMenuSubject
 import com.sdercolin.vlabeler.ui.common.DoneIcon
 import com.sdercolin.vlabeler.ui.common.DoneTriStateIcon
 import com.sdercolin.vlabeler.ui.common.FreeSizedIconButton
@@ -63,20 +68,55 @@ import com.sdercolin.vlabeler.ui.dialog.EntryFilterSetterDialogResult
 import com.sdercolin.vlabeler.ui.string.*
 import com.sdercolin.vlabeler.ui.theme.LightGray
 import com.sdercolin.vlabeler.ui.theme.White20
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+@Stable
+class EntryListStateItem(
+    override val index: Int,
+    val entry: Entry,
+    val isMultipleEditMode: Boolean,
+    val viewConf: AppConf.View,
+    val enableContextMenu: Boolean,
+) :
+    ContextMenuSubject<EditorEntryContextAction> {
+    @Composable
+    override fun getContextMenuActions(): List<EditorEntryContextAction> = if (enableContextMenu) {
+        listOfNotNull(
+            EditorEntryContextAction.CopyEntryName(entry.name),
+            EditorEntryContextAction.CopySampleName(entry.getDisplayedSampleName(viewConf)),
+            EditorEntryContextAction.OpenRenameEntryDialog(index),
+            EditorEntryContextAction.OpenDuplicateEntryDialog(index),
+            EditorEntryContextAction.OpenRemoveEntryDialog(index),
+            EditorEntryContextAction.OpenMoveEntryDialog(index).takeUnless { isMultipleEditMode },
+            EditorEntryContextAction.FilterByEntryName(entry.name).takeIf { isMultipleEditMode },
+            EditorEntryContextAction.FilterBySampleName(entry.getDisplayedSampleName(viewConf))
+                .takeUnless { isMultipleEditMode },
+            EditorEntryContextAction.FilterByTag(entry.notes.tag),
+        )
+    } else {
+        emptyList()
+    }
+}
+
 class EntryListState(
+    private val viewConf: AppConf.View,
     private val filterState: EntryListFilterState,
     project: Project,
     private val jumpToEntry: (Int) -> Unit,
     private val dialogState: AppDialogState?,
-) : NavigatorListState<Entry> {
+    private val enableContextMenu: Boolean,
+) : NavigatorListState<EntryListStateItem, EditorEntryContextAction> {
+    private var isMultipleEditMode = project.multipleEditMode
     var entries = project.currentModule.entries.withIndex().toList()
         private set
     override var currentIndex = 0
         private set
+    override val labelerConf: LabelerConf = project.labelerConf
 
-    override var searchResult: List<IndexedValue<Entry>> by mutableStateOf(calculateResult())
+    private val initialResult = calculateResult()
+    override var isFiltered: Boolean by mutableStateOf(initialResult.first)
+    override var searchResult: List<EntryListStateItem> by mutableStateOf(initialResult.second)
     override var selectedIndex: Int? by mutableStateOf(null)
 
     override var hasFocus: Boolean by mutableStateOf(false)
@@ -88,16 +128,35 @@ class EntryListState(
         jumpToEntry(index)
     }
 
-    override fun calculateResult(): List<IndexedValue<Entry>> = entries.filter { filterState.filter.matches(it.value) }
+    override fun calculateResult(): Pair<Boolean, List<EntryListStateItem>> {
+        val filteredEntries = filterState.filter.filter(entries, labelerConf)
+        return filterState.filter.isEmpty().not() to filteredEntries.map {
+            EntryListStateItem(
+                viewConf = viewConf,
+                index = it.index,
+                entry = it.value,
+                isMultipleEditMode = isMultipleEditMode,
+                enableContextMenu = enableContextMenu,
+            )
+        }
+    }
 
     override fun updateProject(project: Project) {
+        isMultipleEditMode = project.multipleEditMode
         entries = project.currentModule.entries.withIndex().toList()
         currentIndex = project.currentModule.currentIndex
+        if (filterState.filter.star != null || filterState.filter.done != null) {
+            isFilterExpanded = true
+        }
         updateSearch()
     }
 
     suspend fun editFilterInDialog() {
-        val args = EntryFilterSetterDialogArgs(filterState.filter)
+        val args = EntryFilterSetterDialogArgs(
+            labelerConf = labelerConf,
+            entries = entries.map { it.value },
+            value = filterState.filter,
+        )
         val result = dialogState?.awaitEmbeddedDialog(args) ?: return
         val newValue = (result as? EntryFilterSetterDialogResult)?.value ?: return
         filterState.editFilter { newValue }
@@ -115,15 +174,19 @@ fun EntryList(
     jumpToEntry: (Int) -> Unit,
     onFocusedChanged: (Boolean) -> Unit,
     dialogState: AppDialogState?,
+    consumeEditorEntryContextAction: ((EditorEntryContextAction) -> Unit)?,
     state: EntryListState = remember(editorConf, filterState, jumpToEntry) {
         EntryListState(
-            filterState,
-            project,
-            jumpToEntry,
-            dialogState,
+            viewConf = viewConf,
+            filterState = filterState,
+            project = project,
+            jumpToEntry = jumpToEntry,
+            dialogState = dialogState,
+            enableContextMenu = consumeEditorEntryContextAction != null,
         )
     },
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
 
     if (!pinned) LaunchedEffect(Unit) { focusRequester.requestFocus() }
@@ -156,8 +219,7 @@ fun EntryList(
                 if (pinned) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         val countText = "${state.searchResult.size} / ${state.entries.size}"
-                        val isFiltered = state.searchResult.size != state.entries.size
-                        val alpha = if (isFiltered) 0.8f else 0.4f
+                        val alpha = if (state.isFiltered) 0.8f else 0.4f
                         val color = MaterialTheme.colors.onSurface.copy(alpha)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -179,6 +241,39 @@ fun EntryList(
                     }
                 }
             },
+            disabledContent = if (filterState.filter.advanced != null) {
+                {
+                    Row(
+                        Modifier
+                            .background(color = White20, shape = RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .clickable {
+                                coroutineScope.launch {
+                                    state.editFilterInDialog()
+                                }
+                            }
+                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                    ) {
+                        Text(
+                            text = string(Strings.FilterAdvancedInUse),
+                            color = MaterialTheme.colors.onSurface.copy(0.8f),
+                            style = MaterialTheme.typography.caption,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        FreeSizedIconButton(
+                            onClick = {
+                                filterState.clear()
+                                state.updateSearch()
+                            },
+                        ) {
+                            val icon = Icons.Default.Close
+                            Icon(imageVector = icon, contentDescription = null, modifier = Modifier.size(16.dp))
+                        }
+                    }
+                }
+            } else {
+                null
+            },
         )
         val filterShown = pinned && state.isFilterExpanded
         Divider(
@@ -192,6 +287,7 @@ fun EntryList(
         )
         if (filterShown) {
             FilterRow(
+                coroutineScope = coroutineScope,
                 filterState = filterState as LinkableEntryListFilterState,
                 updateSearch = state::updateSearch,
                 editInDialog = state::editFilterInDialog,
@@ -201,28 +297,35 @@ fun EntryList(
         NavigatorListBody(
             state = state,
             itemContent = { ItemContent(editorConf, viewConf, it) },
+            contextMenuActionConsumer = consumeEditorEntryContextAction,
         )
     }
 }
 
 @Composable
 private fun FilterRow(
+    coroutineScope: CoroutineScope,
     filterState: LinkableEntryListFilterState,
     updateSearch: () -> Unit,
     editInDialog: suspend () -> Unit,
 ) {
-    val coroutineScope = rememberCoroutineScope()
+    val isDisabledByAdvancedFilters = filterState.filter.advanced?.isEmpty() == false
     Row(modifier = Modifier.padding(horizontal = 5.dp)) {
         WithTooltip(
             tooltip = string(
-                when (filterState.filter.done) {
-                    true -> Strings.FilterDone
-                    false -> Strings.FilterUndone
-                    null -> Strings.FilterDoneIgnored
+                if (isDisabledByAdvancedFilters) {
+                    Strings.FilterDisabledDueToAdvancedInUse
+                } else {
+                    when (filterState.filter.done) {
+                        true -> Strings.FilterDone
+                        false -> Strings.FilterUndone
+                        null -> Strings.FilterDoneIgnored
+                    }
                 },
             ),
         ) {
             FreeSizedIconButton(
+                enabled = isDisabledByAdvancedFilters.not(),
                 onClick = {
                     filterState.editFilter { doneNexted() }
                     updateSearch()
@@ -234,14 +337,19 @@ private fun FilterRow(
         }
         WithTooltip(
             tooltip = string(
-                when (filterState.filter.star) {
-                    true -> Strings.FilterStarred
-                    false -> Strings.FilterUnstarred
-                    null -> Strings.FilterStarIgnored
+                if (isDisabledByAdvancedFilters) {
+                    Strings.FilterDisabledDueToAdvancedInUse
+                } else {
+                    when (filterState.filter.star) {
+                        true -> Strings.FilterStarred
+                        false -> Strings.FilterUnstarred
+                        null -> Strings.FilterStarIgnored
+                    }
                 },
             ),
         ) {
             FreeSizedIconButton(
+                enabled = isDisabledByAdvancedFilters.not(),
                 onClick = {
                     filterState.editFilter { starNexted() }
                     updateSearch()
@@ -306,16 +414,19 @@ private fun FilterRow(
 }
 
 @Composable
-private fun ItemContent(editorConf: AppConf.Editor, viewConf: AppConf.View, item: IndexedValue<Entry>) {
+private fun ItemContent(editorConf: AppConf.Editor, viewConf: AppConf.View, item: EntryListStateItem) {
     Layout(
         content = {
             NavigatorListItemNumber(item.index)
-            NavigatorItemSummary(item.value.name, item.value.sample, viewConf.hideSampleExtension, isEntry = true)
+            NavigatorItemSummary(
+                name = item.entry.name,
+                subtext = item.entry.getDisplayedSampleName(viewConf),
+            )
             Row {
-                if (item.value.notes.tag.isNotEmpty() && editorConf.showTag) {
+                if (item.entry.notes.tag.isNotEmpty() && editorConf.showTag) {
                     Spacer(modifier = Modifier.width(12.dp))
                     BasicText(
-                        text = item.value.notes.tag,
+                        text = item.entry.notes.tag,
                         modifier = Modifier
                             .offset(y = 1.dp)
                             .background(color = White20, shape = RoundedCornerShape(5.dp))
@@ -331,10 +442,10 @@ private fun ItemContent(editorConf: AppConf.Editor, viewConf: AppConf.View, item
                 modifier = Modifier.padding(horizontal = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                if (item.value.notes.done && editorConf.showDone) {
+                if (item.entry.notes.done && editorConf.showDone) {
                     DoneIcon(true, modifier = Modifier.requiredSize(16.dp))
                 }
-                if (item.value.notes.star && editorConf.showStar) {
+                if (item.entry.notes.star && editorConf.showStar) {
                     StarIcon(true, modifier = Modifier.requiredSize(16.dp))
                 }
             }

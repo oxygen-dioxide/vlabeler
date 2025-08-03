@@ -294,9 +294,9 @@ In the pinned entry list, you can click the `Expand` button to show more options
 For the `Done` filter and `Star` filter, clicking will switch them between `Do not filter`, `Show only starred/done`
 and `Show only unstarred/undone`.
 
-You can click the `More` button to open a dialog for setting conditions separately.
-
 All these filters are combined with `AND` logic.
+
+You can click the `More` button to open a dialog to use the advanced filters.
 
 ### Linking filter to editor
 
@@ -411,6 +411,11 @@ You can find available batch edit plugins in `Tools` -> `Batch Edit`. Some displ
 it is not supported by the current labeler.
 
 You can import/delete/disable batch edit plugins in `Tools` -> `Batch Edit` -> `Manage plugins...`.
+
+### Use scripts
+
+vLabeler allows you to use custom scripts to automate your labeling tasks.
+See [Use custom scripts in vLabeler to complete your labeling tasks](readme/use_scripts.md) for more details.
 
 #### More available plugins (except built-in)
 

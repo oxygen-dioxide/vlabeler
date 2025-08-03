@@ -35,11 +35,13 @@ fun String.toFileOrNull(
     ensureExists: Boolean = true,
     ensureIsFile: Boolean = false,
     ensureIsDirectory: Boolean = false,
-) = this.runIf(allowHomePlaceholder) { resolveHome() }
-    .toFile()
-    .runIfNotNull(ensureExists) { takeIf { it.exists() } }
-    ?.runIfNotNull(ensureIsFile && ensureExists) { takeIf { it.isFile } }
-    ?.runIfNotNull(ensureIsDirectory && ensureExists) { takeIf { it.isDirectory } }
+) = runCatching {
+    this.runIf(allowHomePlaceholder) { resolveHome() }
+        .toFile()
+        .runIfNotNull(ensureExists) { takeIf { it.exists() } }
+        ?.runIfNotNull(ensureIsFile && ensureExists) { takeIf { it.isFile } }
+        ?.runIfNotNull(ensureIsDirectory && ensureExists) { takeIf { it.isDirectory } }
+}.getOrNull()
 
 /**
  * Wrapper of [File.readText] with a default encoding, and trim the BOM.

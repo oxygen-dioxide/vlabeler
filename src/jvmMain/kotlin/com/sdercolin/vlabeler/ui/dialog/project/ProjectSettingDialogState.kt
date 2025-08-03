@@ -3,6 +3,7 @@ package com.sdercolin.vlabeler.ui.dialog.project
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.sdercolin.vlabeler.env.Log
 import com.sdercolin.vlabeler.model.Project
 import com.sdercolin.vlabeler.model.injectLabelerParams
 import com.sdercolin.vlabeler.ui.AppState
@@ -32,8 +33,13 @@ class ProjectSettingDialogState(
 
     val isRootDirectoryValid: Boolean
         get() {
-            val rootDirectory = rootDirectory.toFile()
-            return rootDirectory.isDirectory && Files.isReadable(rootDirectory.toPath())
+            return try {
+                val rootDirectory = rootDirectory.trim().toFile()
+                rootDirectory.isDirectory && Files.isReadable(rootDirectory.toPath())
+            } catch (e: Exception) {
+                Log.info("Invalid root directory: $rootDirectory by ${e.message}")
+                false
+            }
         }
 
     var cacheDirectory: String by mutableStateOf(project.cacheDirectory.absolutePath)
@@ -47,9 +53,14 @@ class ProjectSettingDialogState(
 
     val isCacheDirectoryValid: Boolean
         get() {
-            val cacheDirectory = cacheDirectory.toFile()
-            val parent = cacheDirectory.parentFile ?: return false
-            return parent.isDirectory && cacheDirectory.isFile.not()
+            return try {
+                val cacheDirectory = cacheDirectory.toFile()
+                val parent = cacheDirectory.parentFile ?: return false
+                parent.isDirectory && cacheDirectory.isFile.not()
+            } catch (e: Exception) {
+                Log.info("Invalid cache directory: $cacheDirectory by ${e.message}")
+                false
+            }
         }
 
     val isOutputFileEditable: Boolean
@@ -68,8 +79,14 @@ class ProjectSettingDialogState(
 
     val isOutputFileValid: Boolean
         get() {
-            val outputFile = outputFile ?: return true
-            return outputFile.toFile().parentFile.isDirectory
+            return try {
+                val outputFile = outputFile ?: return true
+                val parent = outputFile.toFile().parentFile ?: return false
+                return parent.isDirectory
+            } catch (e: Exception) {
+                Log.info("Invalid output file: $outputFile by ${e.message}")
+                false
+            }
         }
 
     val canChangeAutoExport: Boolean

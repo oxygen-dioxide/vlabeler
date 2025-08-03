@@ -19,8 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.sdercolin.vlabeler.ui.common.ConfirmButton
 import com.sdercolin.vlabeler.ui.dialog.customization.CustomizableItem
 import com.sdercolin.vlabeler.ui.dialog.customization.CustomizableItemManagerDialogState
-import com.sdercolin.vlabeler.ui.string.Strings
-import com.sdercolin.vlabeler.ui.string.string
+import com.sdercolin.vlabeler.ui.string.*
 import java.io.File
 
 sealed class CommonConfirmationDialogAction(
@@ -28,12 +27,17 @@ sealed class CommonConfirmationDialogAction(
 ) : EmbeddedDialogArgs {
     constructor(stringKey: Strings) : this({ string(stringKey) })
 
-    class RemoveCurrentEntry(isLastEntry: Boolean) :
+    class RemoveEntry(val entryIndex: Int, entryName: String, isLastEntry: Boolean) :
         CommonConfirmationDialogAction(
-            if (isLastEntry) {
-                Strings.AskIfRemoveEntryLastDialogDescription
-            } else {
-                Strings.AskIfRemoveEntryDialogDescription
+            getText = {
+                string(
+                    key = if (isLastEntry) {
+                        Strings.AskIfRemoveEntryLastDialogDescription
+                    } else {
+                        Strings.AskIfRemoveEntryDialogDescription
+                    },
+                    entryName,
+                )
             },
         )
 
@@ -58,6 +62,7 @@ sealed class CommonConfirmationDialogAction(
     object LabelFileChangeDetected : CommonConfirmationDialogAction(
         Strings.AskIfLabelFileChangeDetectedDialogDescription,
     )
+
     object ClearAppRecord : CommonConfirmationDialogAction(Strings.PreferencesMiscClearRecordConfirmation)
     object ClearAppData : CommonConfirmationDialogAction(Strings.PreferencesMiscClearAppDataConfirmation)
 }
@@ -96,4 +101,4 @@ fun CommonConfirmationDialog(
 
 @Composable
 @Preview
-private fun Preview() = CommonConfirmationDialog(CommonConfirmationDialogAction.RemoveCurrentEntry(true)) {}
+private fun Preview() = CommonConfirmationDialog(CommonConfirmationDialogAction.RemoveEntry(1, "Name", true)) {}

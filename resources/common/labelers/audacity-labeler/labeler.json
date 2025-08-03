@@ -1,6 +1,6 @@
 {
     "name": "audacity.default",
-    "version": 14,
+    "version": 16,
     "serialVersion": 2,
     "singleFile": false,
     "extension": "txt",
@@ -22,6 +22,7 @@
     "website": "https://github.com/sdercolin/vlabeler/tree/main/resources/common/labelers",
     "continuous": true,
     "allowSameNameEntry": true,
+    "defaultEntryName": "pau",
     "defaultValues": [
         0,
         0

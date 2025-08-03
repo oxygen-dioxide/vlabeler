@@ -19,6 +19,7 @@ import com.sdercolin.vlabeler.model.Module
 import com.sdercolin.vlabeler.model.Project
 import com.sdercolin.vlabeler.model.ProjectHistory
 import com.sdercolin.vlabeler.model.SampleInfo
+import com.sdercolin.vlabeler.model.filter.EntryFilter
 import com.sdercolin.vlabeler.ui.dialog.CommonConfirmationDialogAction
 import com.sdercolin.vlabeler.ui.dialog.ReloadLabelDialogArgs
 import com.sdercolin.vlabeler.ui.editor.Edition
@@ -87,13 +88,12 @@ interface ProjectStore {
     fun updateEntryExtra(index: Int, extras: List<String?>)
     fun updateCurrentModuleExtra(extras: List<String?>)
     fun duplicateEntry(index: Int, newName: String)
-    val canRemoveCurrentEntry: Boolean
-    fun removeCurrentEntry()
+    fun removeEntry(index: Int)
     fun createDefaultEntry(moduleName: String, sampleName: String)
     fun createDefaultEntries(moduleName: String, sampleNames: List<String>)
     val canMoveEntry: Boolean
     fun moveEntry(index: Int, targetIndex: Int)
-    fun isCurrentEntryTheLast(): Boolean
+    fun isOnlyEntry(): Boolean
     fun toggleMultipleEditMode(on: Boolean)
     fun changeSampleDirectory(directory: File)
     fun changeSampleDirectory(moduleName: String, directory: File)
@@ -147,6 +147,7 @@ interface ProjectStore {
     suspend fun terminalAutoReloadLabel()
 
     suspend fun withExporting(onSuccess: suspend () -> File)
+    fun updateEntryFilter(updater: EntryFilter.() -> EntryFilter?)
 }
 
 class ProjectStoreImpl(
@@ -429,13 +430,10 @@ class ProjectStoreImpl(
         }
     }
 
-    override val canRemoveCurrentEntry
-        get() = requireProject().currentModule.entries.size > 1
-
-    override fun removeCurrentEntry() {
+    override fun removeEntry(index: Int) {
         val previousProject = requireProject()
 
-        editProject { updateCurrentModule { removeCurrentEntry(labelerConf) } }
+        editProject { updateCurrentModule { removeEntry(index, labelerConf) } }
         val autoScrollConf = appConf.value.editor.autoScroll
         if ((requireProject().hasSwitchedSample(previousProject) && autoScrollConf.onLoadedNewSample) ||
             autoScrollConf.onSwitched
@@ -469,7 +467,7 @@ class ProjectStoreImpl(
         }
     }
 
-    override fun isCurrentEntryTheLast(): Boolean {
+    override fun isOnlyEntry(): Boolean {
         val project = requireProject()
         return project.currentModule.entries.count { it.sample.equalsAsFileName(project.currentSampleName) } == 1
     }
@@ -817,5 +815,13 @@ class ProjectStoreImpl(
     override suspend fun terminalAutoReloadLabel() {
         fileChangeDetection?.awaitDispose()
         fileChangeDetection = null
+    }
+
+    override fun updateEntryFilter(updater: EntryFilter.() -> EntryFilter?) {
+        editProject {
+            val current = entryFilter ?: EntryFilter()
+            val updated = current.updater() ?: return@editProject this
+            updateEntryFilter(updated)
+        }
     }
 }

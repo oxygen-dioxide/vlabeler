@@ -33,7 +33,7 @@ fun Strings.en(): String = when (this) {
     MenuEditToolsPlayback -> "Playback"
     MenuEditRenameEntry -> "Rename Current Entry..."
     MenuEditDuplicateEntry -> "Duplicate Current Entry..."
-    MenuEditRemoveEntry -> "Remove Current Entry"
+    MenuEditRemoveEntry -> "Remove Current Entry..."
     MenuEditMoveEntry -> "Move Current Entry to..."
     MenuEditToggleDone -> "Toggle Done for Current Entry"
     MenuEditToggleStar -> "Toggle Starred for Current Entry"
@@ -106,6 +106,8 @@ fun Strings.en(): String = when (this) {
     CommonSelect -> "Select"
     CommonOpen -> "Open"
     CommonSave -> "Save"
+    CommonReset -> "Reset"
+    CommonClear -> "Clear"
     CommonInputErrorPromptNumber -> "Please enter a number."
     CommonInputErrorPromptInteger -> "Please enter an integer number."
     CommonInputErrorPromptNumberRange -> "Please enter a number between %s and %s."
@@ -198,9 +200,9 @@ fun Strings.en(): String = when (this) {
     EditEntryExtraDialogDescription -> "Edit extra information of current entry"
     EditModuleExtraDialogDescription -> "Edit extra information of current subproject"
     MoveEntryDialogDescription -> "Input new index for entry \"%1\$s\" (%2\$d ~ %3\$d)"
-    AskIfRemoveEntryDialogDescription -> "Removing current entry..."
+    AskIfRemoveEntryDialogDescription -> "Removing entry \"%s\"..."
     AskIfRemoveEntryLastDialogDescription ->
-        "Removing current entry...\n" +
+        "Removing entry \"%s\"...\n" +
             "This entry is the only one that has reference of the current sample file.\n" +
             "If you need to add an entry on it later, please see menu `View` -> `Sample List`."
     AskIfLoadAutoSavedProjectDialogDescription ->
@@ -262,11 +264,20 @@ fun Strings.en(): String = when (this) {
     FailedToLoadSampleFileError -> "Could not load the sample file.\nIt may not exist or is not a supported format."
     PluginRuntimeUnexpectedException ->
         "An unexpected error occurred during the plugin execution.\n" +
-            "Please contact the author for more information."
+            "Please contact the author with the error log for more information."
+    FailedToCreateProjectException ->
+        "Failed to create the project." +
+            "Please check the settings of the labeler/plugin to ensure you have set it up correctly.\n" +
+            "If the problem still occurs, please contact the author of the labeler/plugin with the error log " +
+            "for more information."
     InvalidCreatedProjectException ->
         "The created project is not valid. " +
             "Please check the settings of the labeler/plugin to ensure you have set it up correctly.\n" +
-            "If the problem still occurs, please contact the author of the labeler/plugin for more information."
+            "If the problem still occurs, please contact the author of the labeler/plugin with the error log " +
+            "for more information."
+    FailedToCreateProjectNoSampleException ->
+        "Failed to create the project because no sample file was found in the sample directory set in the Directory " +
+            "Settings."
     InvalidOpenedProjectException ->
         "Could not open the project because it contains invalid data.\n" +
             "Please check the error log for more information."
@@ -289,7 +300,7 @@ fun Strings.en(): String = when (this) {
     PropertySetterRuntimeExceptionTemplate -> "Labeler runtime error when setting property: %s"
     PropertySetterUnexpectedRuntimeException ->
         "An unexpected error occurred when setting property.\n" +
-            "Please contact the author of the labeler for more information."
+            "Please contact the author of the labeler with the error log for more information."
     VideoComponentInitializationException ->
         "Could not initialize the video component. You need to install VLC on your device to use this feature. " +
             "Please read the `Video integration` section in README for details."
@@ -547,6 +558,17 @@ fun Strings.en(): String = when (this) {
     PreferencesEditorContinuousLabelNamesEditableBackgroundColor -> "Background color (editing)"
     PreferencesEditorContinuousLabelNamesSize -> "Size"
     PreferencesEditorContinuousLabelNamesPosition -> "Position"
+    PreferencesEditorBorderHighlight -> "Border highlight"
+    PreferencesEditorBorderHighlightDescription -> "Customize border highlighting in multiple edit mode."
+    PreferencesEditorHighlightCurrentEntryBorder -> "Highlight entry borders of current entry"
+    PreferencesEditorHighlightCurrentEntryBorderDescription,
+    -> "In multiple edit mode, highlight borders of the entry that is currently selected in the entry list."
+    PreferencesEditorHighlightCursorPositionEntryBorder -> "Highlight entry borders with cursor position"
+    PreferencesEditorHighlightCursorPositionEntryBorderDescription,
+    -> "In multiple edit mode, highlight borders of the entry where your cursor is currently positioned."
+    PreferencesEditorHighlightEntryBorderEnabled -> "Enabled"
+    PreferencesEditorHighlightEntryBorderColor -> "Color"
+    PreferencesEditorHighlightEntryBorderWidth -> "Width"
     PreferencesPlayback -> "Playback"
     PreferencesPlaybackDescription -> "Customize the behavior about audio playback."
     PreferencesPlaybackPlayOnDragging -> "Preview playback"
@@ -697,6 +719,8 @@ fun Strings.en(): String = when (this) {
     FilterDoneIgnored -> "Not filtered by done"
     FilterLink -> "Toggle to apply the filters to project navigation"
     FilterLinked -> "Filters applied to project navigation"
+    FilterAdvancedInUse -> "Advanced Filters"
+    FilterDisabledDueToAdvancedInUse -> "Disabled because advanced filters are applied"
     ColorPickerDialogTitle -> "vLabeler - Color Picker"
     QuickLaunchManagerDialogTitle -> "Plugin Slots"
     QuickLaunchManagerDialogDescription ->
@@ -751,6 +775,8 @@ fun Strings.en(): String = when (this) {
         "vLabeler is running on Rosetta 2 compatibility mode.\n" +
             "For better performance, please try the build for Apple Silicon (~mac-arm64.dmg)."
     EntryFilterSetterDialogTitle -> "Filter Settings"
+    EntryFilterSetterDialogModeBasic -> "Basic"
+    EntryFilterSetterDialogModeAdvanced -> "Advanced"
     EntryFilterSetterDialogHeaderAny -> "Any text contains"
     EntryFilterSetterDialogHeaderName -> "Entry name contains"
     EntryFilterSetterDialogHeaderSample -> "Sample name contains"
@@ -782,4 +808,17 @@ fun Strings.en(): String = when (this) {
     ReloadLabelDialogInheritNotes -> "Inherit notes"
     ReloadLabelDialogInheritNotesDescription ->
         "If enabled, the notes on old entries will be copied to the new entries for all matched entry pairs."
+    EditorContextActionOpenRenameEntryDialog -> "Rename Entry..."
+    EditorContextActionOpenDuplicateEntryDialog -> "Duplicate Entry..."
+    EditorContextActionOpenRemoveEntryDialog -> "Remove Entry..."
+    EditorContextActionOpenMoveEntryDialog -> "Move Entry to..."
+    EditorContextActionCopyEntryName -> "Copy Entry Name to Clipboard"
+    EditorContextActionFilterByEntryName -> "Filter by Entry Name"
+    EditorContextActionCopySampleName -> "Copy Sample Name to Clipboard"
+    EditorContextActionFilterBySampleName -> "Filter by Sample Name"
+    EditorContextActionFilterByTag -> "Filter by Tag"
+    EditorContextActionFilterStarred -> "Filter Starred Entries"
+    EditorContextActionFilterUnstarred -> "Filter Unstarred Entries"
+    EditorContextActionFilterDone -> "Filter Done Entries"
+    EditorContextActionFilterUndone -> "Filter Undone Entries"
 }

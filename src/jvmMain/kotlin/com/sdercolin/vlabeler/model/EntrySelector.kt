@@ -31,6 +31,8 @@ data class EntrySelector(
             return _expression
         }
 
+    fun isEmpty(): Boolean = filters.isEmpty()
+
     fun isValid(labelerConf: LabelerConf): Boolean {
         if (rawExpression != null) {
             if (runCatching { expression }.isFailure) return false
@@ -219,11 +221,11 @@ data class EntrySelector(
                 SCRIPT_ITEM_SUBJECT to Strings.PluginEntrySelectorPreservedSubjectScript,
             )
 
-        private const val TEXT_ITEM_SUBJECT_ENTRY_NAME = "name"
-        private const val TEXT_ITEM_SUBJECT_SAMPLE_NAME = "sample"
-        private const val TEXT_ITEM_SUBJECT_TAG_NAME = "tag"
-        private const val BOOLEAN_ITEM_SUBJECT_DONE = "done"
-        private const val BOOLEAN_ITEM_SUBJECT_STAR = "star"
-        private const val SCRIPT_ITEM_SUBJECT = "script"
+        const val TEXT_ITEM_SUBJECT_ENTRY_NAME = "name"
+        const val TEXT_ITEM_SUBJECT_SAMPLE_NAME = "sample"
+        const val TEXT_ITEM_SUBJECT_TAG_NAME = "tag"
+        const val BOOLEAN_ITEM_SUBJECT_DONE = "done"
+        const val BOOLEAN_ITEM_SUBJECT_STAR = "star"
+        const val SCRIPT_ITEM_SUBJECT = "script"
     }
 }

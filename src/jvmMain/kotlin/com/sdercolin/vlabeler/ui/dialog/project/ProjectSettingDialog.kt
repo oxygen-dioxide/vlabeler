@@ -153,6 +153,7 @@ private fun ColumnScope.Content(state: ProjectSettingDialogState) {
             isError = state.isRootDirectoryValid.not(),
             trailingIcon = {
                 IconButton(
+                    modifier = Modifier.padding(end = 4.dp),
                     onClick = { state.isShowingRootDirectoryDialog = true },
                 ) {
                     Icon(Icons.Default.FolderOpen, null)
@@ -172,6 +173,7 @@ private fun ColumnScope.Content(state: ProjectSettingDialogState) {
             isError = state.isCacheDirectoryValid.not(),
             trailingIcon = {
                 IconButton(
+                    modifier = Modifier.padding(end = 4.dp),
                     onClick = { state.isShowingCacheDirectoryDialog = true },
                 ) {
                     Icon(Icons.Default.FolderOpen, null)
@@ -192,6 +194,7 @@ private fun ColumnScope.Content(state: ProjectSettingDialogState) {
             enabled = state.isOutputFileEditable,
             trailingIcon = {
                 IconButton(
+                    modifier = Modifier.padding(end = 4.dp),
                     onClick = { state.isShowingOutputFileDialog = true },
                     enabled = state.isOutputFileEditable,
                 ) {

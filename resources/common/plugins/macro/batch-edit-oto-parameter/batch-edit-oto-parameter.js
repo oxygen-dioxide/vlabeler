@@ -5,7 +5,7 @@ let keepDistance = params["keepDistance"]
 let nameTexts = [
     ["offset", ["Offset", "左边界", "左ブランク"]],
     ["fixed", ["Fixed", "固定", "固定範囲"]],
-    ["overlap", ["Overlap", "重叠"]],
+    ["overlap", ["Overlap", "重叠", "オーバーラップ"]],
     ["preutterance", ["Preutterance", "先行发声", "先行発声"]],
     ["cutoff", ["Cutoff", "右边界", "右ブランク"]],
 ]

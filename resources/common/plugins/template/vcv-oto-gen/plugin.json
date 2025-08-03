@@ -1,6 +1,6 @@
 {
     "name": "vcv-oto-gen",
-    "version": 9,
+    "version": 10,
     "type": "template",
     "displayedName": {
         "en": "VCV oto generator",
@@ -115,6 +115,25 @@
                     "zh": "常规采样的文件名中音节之间的分隔符。例如，输入 \"_\" 以匹配类似 \"_あ_あ_い_あ_う_え_あ\" 的文件名，留空以匹配 \"_ああいあうえあ\"。",
                     "ja": "通常のサンプルファイル名の音節間の区切り文字。e.g. \"_あ_あ_い_あ_う_え_あ\"のようなファイル名には\"_\"を入力し、\"_ああいあうえあ\"のようであれば空にしてください。",
                     "ko": "일반적인 파일 이름에 쓰이는 음절 사이의 구분자에요. (예시: 파일 이름이 \"_あ_あ_い_あ_う_え_あ\"와 같을 경우 \"_\"를 입력하고, \"_ああいあうえあ\"와 같을 경우 이 칸을 비워 주세요."
+                },
+                "defaultValue": "",
+                "multiLine": false,
+                "optional": true
+            },
+            {
+                "type": "string",
+                "name": "headSeparator",
+                "label": {
+                    "en": "Head separator",
+                    "zh": "起始分隔符",
+                    "ja": "先頭区切り文字",
+                    "ko": "시작 구분자"
+                },
+                "description": {
+                    "en": "Separator of syllables in the file names for files containing multiple head style CVs. e.g. enter \"_\" for file names like \"_か_き_く_け_こ\" to create head style CV for each syllable like \"- か\", \"- き\", etc.. Leave empty to disable this feature.",
+                    "zh": "连续收录了起始样式的 CV 的采样文件名中音节之间的分隔符。例如，输入 \"_\" 以匹配类似 \"_か_き_く_け_こ\" 的文件名，以为每个音节创建起始样式的 CV，如 \"- か\", \"- き\" 等。留空以禁用此功能。",
+                    "ja": "先頭 CV を連続で収録したサンプルファイル名の音節間の区切り文字。e.g. \"_か_き_く_け_こ\"のようなファイル名には\"_\"を入力して、各音節に対して先頭スタイルの CV を作成します（例: \"- か\", \"- き\"など）。この機能を無効にするには空にしてください。",
+                    "ko": "여러 개의 시작 스타일 CV를 포함하는 파일의 파일 이름에 쓰이는 음절 사이의 구분자에요. (예시: 파일 이름이 \"_か_き_く_け_こ\"와 같을 경우 \"_\"를 입력하면, 각 음절에 대해 시작 스타일 CV가 생성되요. (예시: \"- か\", \"- き\" 등). 이 기능을 비활성화하려면 이 칸을 비워 주세요."
                 },
                 "defaultValue": "",
                 "multiLine": false,

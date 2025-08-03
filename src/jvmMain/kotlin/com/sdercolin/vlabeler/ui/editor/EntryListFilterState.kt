@@ -23,9 +23,9 @@ open class EntryListFilterState {
 class LinkableEntryListFilterState(project: Project, private val submitFilter: (EntryFilter?) -> Unit) :
     EntryListFilterState() {
 
-    private var projectFiler: EntryFilter? = project.currentModule.entryFilter
+    private var projectFiler: EntryFilter? = project.entryFilter
 
-    var linked: Boolean by mutableStateOf(project.currentModule.entryFilter != null)
+    var linked: Boolean by mutableStateOf(project.entryFilter != null)
 
     init {
         filter = projectFiler ?: EntryFilter()
@@ -40,9 +40,9 @@ class LinkableEntryListFilterState(project: Project, private val submitFilter: (
     }
 
     fun updateProject(project: Project) {
-        projectFiler = project.currentModule.entryFilter
+        projectFiler = project.entryFilter
         linked = projectFiler != null
-        project.currentModule.entryFilter?.let { filter = it }
+        project.entryFilter?.let { filter = it }
     }
 
     fun toggleLinked() {

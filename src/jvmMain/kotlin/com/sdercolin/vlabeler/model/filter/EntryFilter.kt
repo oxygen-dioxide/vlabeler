@@ -1,6 +1,9 @@
 package com.sdercolin.vlabeler.model.filter
 
 import com.sdercolin.vlabeler.model.Entry
+import com.sdercolin.vlabeler.model.EntrySelector
+import com.sdercolin.vlabeler.model.LabelerConf
+import com.sdercolin.vlabeler.util.JavaScript
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 
@@ -10,16 +13,16 @@ import kotlinx.serialization.Transient
  * @property searchText The combined text prompt for searching. e.g. `"any";name:"name";sample:"sample";tag:"tag"`
  * @property star The star filter. If null, no filter is applied.
  * @property done The done filter. If null, no filter is applied.
+ * @property advanced The advanced filter. If exists, the other filters are ignored.
  */
 @Serializable
 data class EntryFilter(
     val searchText: String = "",
     val star: Boolean? = null,
     val done: Boolean? = null,
+    val advanced: EntrySelector? = null,
 ) {
-    fun isEmpty(): Boolean {
-        return searchText.isEmpty() && star == null && done == null
-    }
+    fun isEmpty(): Boolean = advanced?.isEmpty() ?: (searchText.isEmpty() && star == null && done == null)
 
     fun parse(): Args {
         var name: String? = null
@@ -81,7 +84,23 @@ data class EntryFilter(
     @Transient
     private val args = parse()
 
-    fun matches(entry: Entry): Boolean {
+    fun filter(entries: List<IndexedValue<Entry>>, labelerConf: LabelerConf): List<IndexedValue<Entry>> {
+        if (advanced != null) {
+            val js = JavaScript()
+            return advanced.select(entries.map { it.value }, labelerConf, js).map { entries[it] }
+        }
+        return entries.filter { matchBasic(it.value) }
+    }
+
+    fun getFilteredIndexes(entries: List<Entry>, labelerConf: LabelerConf): List<Int> {
+        if (advanced != null) {
+            val js = JavaScript()
+            return advanced.select(entries, labelerConf, js)
+        }
+        return entries.indices.filter { matchBasic(entries[it]) }
+    }
+
+    fun matchBasic(entry: Entry): Boolean {
         args.any?.let {
             if (!entry.name.contains(it) &&
                 !entry.sampleNameWithoutExtension.contains(it) &&

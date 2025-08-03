@@ -358,7 +358,7 @@ class AppState(
                 moveEntry(result.oldIndex, result.newIndex)
             }
             is CommonConfirmationDialogResult -> when (val action = result.action) {
-                is CommonConfirmationDialogAction.RemoveCurrentEntry -> removeCurrentEntry()
+                is CommonConfirmationDialogAction.RemoveEntry -> removeEntry(action.entryIndex)
                 is CommonConfirmationDialogAction.LoadAutoSavedProject -> {
                     loadProject(mainScope, action.file, this, autoSaved = true)
                     hasLoadedAutoSavedProject = true

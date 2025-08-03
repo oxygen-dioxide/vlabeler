@@ -234,13 +234,24 @@ fun FrameWindowScope.Menu(
                     )
                     Item(
                         string(Strings.MenuEditRemoveEntry),
-                        onClick = { appState.confirmIfRemoveCurrentEntry(appState.isCurrentEntryTheLast()) },
+                        onClick = {
+                            appState.confirmIfRemoveEntry(
+                                index = appState.requireProject().currentModule.currentIndex,
+                                name = appState.requireProject().currentModule.currentEntry.name,
+                                isLastEntry = appState.isOnlyEntry(),
+                            )
+                        },
                         shortcut = KeyAction.RemoveCurrentEntry.getKeyShortCut(),
                         enabled = appState.isEditorActive,
                     )
                     Item(
                         string(Strings.MenuEditMoveEntry),
-                        onClick = { appState.openMoveCurrentEntryDialog(appState.appConf) },
+                        onClick = {
+                            appState.openMoveEntryDialog(
+                                index = appState.requireProject().currentModule.currentIndex,
+                                appConf = appState.appConf,
+                            )
+                        },
                         shortcut = KeyAction.MoveCurrentEntry.getKeyShortCut(),
                         enabled = appState.isEditorActive && appState.canMoveEntry,
                     )
@@ -346,6 +357,7 @@ fun FrameWindowScope.Menu(
                             onCheckedChange = { if (it) appState.toggleVideoPopup(false) },
                             enabled = appState.isEditorActive,
                         )
+                        /* Disabled due to compose UI error
                         CheckboxItem(
                             string(Strings.MenuViewVideoEmbedded),
                             checked = appState.isShowingVideo && appState.videoState.isEmbeddedMode,
@@ -355,7 +367,7 @@ fun FrameWindowScope.Menu(
                             },
                             shortcut = KeyAction.ToggleVideoPopupEmbedded.getKeyShortCut(),
                             enabled = appState.isEditorActive,
-                        )
+                        )*/
                         CheckboxItem(
                             string(Strings.MenuViewVideoNewWindow),
                             checked = appState.isShowingVideo && appState.videoState.isNewWindowMode,

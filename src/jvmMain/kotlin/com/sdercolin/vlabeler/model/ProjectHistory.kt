@@ -45,11 +45,11 @@ class ProjectHistory(private val appConfState: State<AppConf>) {
     }
 
     private fun Project.contentEquals(other: Project) = copy(
+        entryFilter = other.entryFilter,
         currentModuleIndex = if (squashIndex) other.currentModuleIndex else currentModuleIndex,
         // modules size will not change
         modules = modules.zip(other.modules).map { (module, other) ->
             module.copy(
-                entryFilter = other.entryFilter,
                 currentIndex = if (squashIndex) other.currentIndex else module.currentIndex,
             )
         },

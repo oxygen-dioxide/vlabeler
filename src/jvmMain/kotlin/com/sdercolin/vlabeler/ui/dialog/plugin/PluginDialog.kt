@@ -49,6 +49,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -261,7 +262,9 @@ private fun PluginDialog(
     ) {
         LaunchSaveDialogSize(dialogState, appRecordStore)
         AppTheme(appConf.view) {
-            Content(state, appRecordStore)
+            key(state.resetKey) {
+                Content(state, appRecordStore)
+            }
         }
     }
 }
@@ -726,7 +729,11 @@ private fun ParamFileTextField(
             isError = isError,
             enabled = enabled,
             trailingIcon = {
-                IconButton(onClick = { isShowingFilePicker = true }, enabled = enabled) {
+                IconButton(
+                    modifier = Modifier.padding(end = 4.dp),
+                    onClick = { isShowingFilePicker = true },
+                    enabled = enabled,
+                ) {
                     Icon(Icons.Default.FolderOpen, null)
                 }
             },
@@ -807,7 +814,11 @@ private fun ParamRawFileTextField(
             isError = isError,
             enabled = enabled,
             trailingIcon = {
-                IconButton(onClick = { isShowingFilePicker = true }, enabled = enabled) {
+                IconButton(
+                    modifier = Modifier.padding(end = 4.dp),
+                    onClick = { isShowingFilePicker = true },
+                    enabled = enabled,
+                ) {
                     Icon(Icons.Default.FolderOpen, null)
                 }
             },

@@ -35,7 +35,7 @@ fun Strings.zhHans(): String? = when (this) {
     MenuEditToolsPlayback -> "播放"
     MenuEditRenameEntry -> "编辑当前条目名..."
     MenuEditDuplicateEntry -> "创建当前条目的副本..."
-    MenuEditRemoveEntry -> "删除当前条目"
+    MenuEditRemoveEntry -> "删除当前条目..."
     MenuEditMoveEntry -> "移动当前条目至..."
     MenuEditToggleDone -> "对当前条目切换完成状态"
     MenuEditToggleStar -> "对当前条目切换星标状态"
@@ -108,6 +108,8 @@ fun Strings.zhHans(): String? = when (this) {
     CommonSelect -> "选择"
     CommonOpen -> "打开"
     CommonSave -> "保存"
+    CommonReset -> "重置"
+    CommonClear -> "清空"
     CommonInputErrorPromptNumber -> "请输入一个数字。"
     CommonInputErrorPromptInteger -> "请输入一个整数。"
     CommonInputErrorPromptNumberRange -> "请输入一个介于 %s 与 %s 之间的数字。"
@@ -190,9 +192,9 @@ fun Strings.zhHans(): String? = when (this) {
     EditEntryExtraDialogDescription -> "编辑当前条目的额外信息"
     EditModuleExtraDialogDescription -> "编辑当前子项目的额外信息"
     MoveEntryDialogDescription -> "请输入条目 \"%1\$s\" 的新索引（%2\$d ~ %3\$d）"
-    AskIfRemoveEntryDialogDescription -> "将要删除当前条目..."
+    AskIfRemoveEntryDialogDescription -> "将要删除条目 \"%s\"..."
     AskIfRemoveEntryLastDialogDescription ->
-        "将要删除当前条目...\n" +
+        "将要删除条目\"%s\"...\n" +
             "该条目是当前采样文件关联到的唯一条目。如果您想重新关联这个采样文件，请前往菜单 `视图` -> `采样列表`"
     AskIfLoadAutoSavedProjectDialogDescription -> "发现自动保存的项目文件。是否读取？该文件将会在您打开或创建别的项目时被删除。"
     AskIfRedirectSampleDirectoryDialogDescription ->
@@ -244,9 +246,13 @@ fun Strings.zhHans(): String? = when (this) {
         "用于组合上述筛选条件的逻辑表达式。\n可用的记号有：`and`，`or`，`not`，`xor`，`(`，`)`，`#1`，`#2`，等等。"
     EditorSubTitleMultiple -> "编辑采样 %2\$s 中的%1\$d个条目"
     FailedToLoadSampleFileError -> "无法读取该采样文件。它可能不存在，或是不支持的格式。"
-    PluginRuntimeUnexpectedException -> "插件执行过程中发生了意外的错误。请联系插件作者以获取更多信息。"
+    PluginRuntimeUnexpectedException -> "插件执行过程中发生了意外的错误。请附带错误日志联系插件作者以获取更多信息。"
+    FailedToCreateProjectException ->
+        "无法创建项目。请检查您正在使用的标注器或插件的设置。如果问题仍然无法解决，请附带错误日志联系标注器或插件的作者以获取更多信息。"
     InvalidCreatedProjectException ->
-        "新建的项目为无效项目。请检查您正在使用的标注器或插件的设置。如果问题仍然无法解决，请联系标注器或插件的作者以获取更多信息。"
+        "新建的项目为无效项目。请检查您正在使用的标注器或插件的设置。" +
+            "如果问题仍然无法解决，请附带错误日志联系标注器或插件的作者以获取更多信息。"
+    FailedToCreateProjectNoSampleException -> "无法创建项目，因为在目录设置中设置的采样目录中未找到任何采样文件。"
     InvalidOpenedProjectException -> "无法打开该项目，因为其中包含无效的数据。详情请查看错误日志。"
     ProjectParseException ->
         "无法打开该项目。它可能已损坏，或者是由一个与当前版本不兼容的 vLabeler 版本创建的。" +
@@ -260,7 +266,7 @@ fun Strings.zhHans(): String? = when (this) {
     ProjectConstructorRuntimeExceptionTemplate -> "构建项目时的标注器运行时错误：%s"
     QuickProjectBuilderRuntimeExceptionTemplate -> "构建快捷编辑项目时的标注器运行时错误：%s"
     PropertySetterRuntimeExceptionTemplate -> "设置属性时的标注器运行时错误：%s"
-    PropertySetterUnexpectedRuntimeException -> "设置属性时发生了意外的错误。请联系标注器作者以获取更多信息。"
+    PropertySetterUnexpectedRuntimeException -> "设置属性时发生了意外的错误。请附带错误日志联系标注器作者以获取更多信息。"
     VideoComponentInitializationException ->
         "无法初始化视频组件。您需要在您的设备上安装 VLC 才能使用此功能。请阅读 README 中的 `集成视频` 部分以获取更多信息。"
     VideoFileNotFoundExceptionTemplate -> "未找到 %s 的同名视频文件（%s）"
@@ -488,6 +494,15 @@ fun Strings.zhHans(): String? = when (this) {
     PreferencesEditorContinuousLabelNamesEditableBackgroundColor -> "背景色（编辑中）"
     PreferencesEditorContinuousLabelNamesSize -> "大小"
     PreferencesEditorContinuousLabelNamesPosition -> "位置"
+    PreferencesEditorBorderHighlight -> "边界高亮"
+    PreferencesEditorBorderHighlightDescription -> "自定义边界高亮的外观（仅限多条目编辑模式）。"
+    PreferencesEditorHighlightCurrentEntryBorder -> "高亮当前条目的边界"
+    PreferencesEditorHighlightCurrentEntryBorderDescription -> "在多条目编辑模式中，高亮当前在条目列表中选中的条目的边界。"
+    PreferencesEditorHighlightCursorPositionEntryBorder -> "高亮光标所在条目的边界"
+    PreferencesEditorHighlightCursorPositionEntryBorderDescription -> "在多条目编辑模式中，高亮光标当前位置所在条目的边界。"
+    PreferencesEditorHighlightEntryBorderEnabled -> "启用"
+    PreferencesEditorHighlightEntryBorderColor -> "颜色"
+    PreferencesEditorHighlightEntryBorderWidth -> "宽度"
     PreferencesPlayback -> "播放"
     PreferencesPlaybackDescription -> "编辑音频播放的行为。"
     PreferencesPlaybackPlayOnDragging -> "预览播放"
@@ -628,6 +643,8 @@ fun Strings.zhHans(): String? = when (this) {
     FilterDoneIgnored -> "不筛选完成状态"
     FilterLink -> "将筛选器应用到项目导航"
     FilterLinked -> "筛选器已应用到项目导航"
+    FilterAdvancedInUse -> "高级筛选器已启用"
+    FilterDisabledDueToAdvancedInUse -> "由于高级筛选器已启用，该项目不可用"
     ColorPickerDialogTitle -> "vLabeler - 选色器"
     QuickLaunchManagerDialogTitle -> "插件槽位"
     QuickLaunchManagerDialogDescription ->
@@ -672,6 +689,8 @@ fun Strings.zhHans(): String? = when (this) {
     AppRunningOnCompatibilityModeWarning ->
         "vLabeler 正在运行在 Rosetta 2 兼容模式下。\n为了获得更好的性能，请尝试使用 Apple Silicon 架构的版本（~mac-arm64.dmg）。"
     EntryFilterSetterDialogTitle -> "筛选设置"
+    EntryFilterSetterDialogModeBasic -> "基础"
+    EntryFilterSetterDialogModeAdvanced -> "高级"
     EntryFilterSetterDialogHeaderAny -> "任何文字包含"
     EntryFilterSetterDialogHeaderName -> "条目名包含"
     EntryFilterSetterDialogHeaderSample -> "采样名包含"
@@ -697,5 +716,18 @@ fun Strings.zhHans(): String? = when (this) {
     ReloadLabelDialogNoDiff -> "没有发现差异。"
     ReloadLabelDialogInheritNotes -> "继承备注"
     ReloadLabelDialogInheritNotesDescription -> "如果启用，对于所有匹配的条目对，旧条目的备注将被复制到对应的新条目中。"
+    EditorContextActionOpenRenameEntryDialog -> "编辑条目名..."
+    EditorContextActionOpenDuplicateEntryDialog -> "创建条目的副本..."
+    EditorContextActionOpenRemoveEntryDialog -> "删除条目..."
+    EditorContextActionOpenMoveEntryDialog -> "移动条目..."
+    EditorContextActionCopyEntryName -> "复制条目名到剪贴板"
+    EditorContextActionFilterByEntryName -> "以此条目名筛选条目"
+    EditorContextActionCopySampleName -> "复制采样名到剪贴板"
+    EditorContextActionFilterBySampleName -> "以此采样名筛选条目"
+    EditorContextActionFilterByTag -> "以此标签筛选条目"
+    EditorContextActionFilterStarred -> "筛选星标条目"
+    EditorContextActionFilterUnstarred -> "筛选未星标条目"
+    EditorContextActionFilterDone -> "筛选已完成条目"
+    EditorContextActionFilterUndone -> "筛选未完成条目"
     else -> null
 }

@@ -162,9 +162,14 @@ class ProjectCreatorState(
     }
 
     fun isSampleDirectoryValid(): Boolean {
-        val file = File(sampleDirectory)
-        if (!file.isDirectory) return false
-        return file.exists() && Files.isReadable(file.toPath())
+        return try {
+            val file = File(sampleDirectory)
+            if (!file.isDirectory) return false
+            file.exists() && Files.isReadable(file.toPath())
+        } catch (t: Throwable) {
+            Log.info("Invalid sample directory: $sampleDirectory by ${t.message}")
+            false
+        }
     }
 
     fun isProjectNameValid(): Boolean {
@@ -172,9 +177,14 @@ class ProjectCreatorState(
     }
 
     fun isWorkingDirectoryValid(): Boolean {
-        val file = File(workingDirectory)
-        if (file.parentFile?.exists() == false) return false
-        return file.name.isValidFileName() && file.isDirectory
+        return try {
+            val file = File(workingDirectory)
+            if (file.parentFile?.exists() == false) return false
+            file.name.isValidFileName() && file.isDirectory
+        } catch (t: Throwable) {
+            Log.info("Invalid working directory: $workingDirectory by ${t.message}")
+            false
+        }
     }
 
     fun isProjectFileExisting(): Boolean {
@@ -184,11 +194,16 @@ class ProjectCreatorState(
     }
 
     fun isCacheDirectoryValid(): Boolean {
-        val file = File(cacheDirectory)
-        val parent = file.parent.orEmpty()
-        if (parent != workingDirectory && parent.toFile().exists().not()) return false
-        if (file.isFile) return false
-        return file.name.isValidFileName()
+        return try {
+            val file = File(cacheDirectory)
+            val parent = file.parent.orEmpty()
+            if (parent != workingDirectory && parent.toFile().exists().not()) return false
+            if (file.isFile) return false
+            return file.name.isValidFileName()
+        } catch (t: Throwable) {
+            Log.info("Invalid cache directory: $cacheDirectory by ${t.message}")
+            false
+        }
     }
     /* endregion */
 

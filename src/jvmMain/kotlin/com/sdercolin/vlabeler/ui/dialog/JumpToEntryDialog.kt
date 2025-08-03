@@ -36,5 +36,6 @@ fun JumpToEntryDialog(
         jumpToEntry = { index -> finish(JumpToEntryDialogResult(index)) },
         onFocusedChanged = {},
         dialogState = null,
+        consumeEditorEntryContextAction = null,
     )
 }

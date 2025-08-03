@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -45,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.sdercolin.vlabeler.model.Entry
 import com.sdercolin.vlabeler.model.EntrySelector
@@ -73,6 +75,8 @@ fun ParamEntrySelector(
     js: JavaScript?,
     enabled: Boolean,
     onError: (Throwable) -> Unit,
+    height: Dp = 160.dp,
+    expandedHeight: Dp? = 500.dp,
 ) {
     val hasClickedApply = remember { mutableStateOf(false) }
     val filters = remember(value) { mutableStateListOf(*value.filters.toTypedArray()) }
@@ -83,8 +87,8 @@ fun ParamEntrySelector(
         modifier = Modifier.fillMaxWidth()
             .background(MaterialTheme.colors.background),
     ) {
-        val height = if (isExpanded) 500.dp else 160.dp
-        Row(Modifier.height(height).fillMaxWidth()) {
+        val selectedHeight = if (isExpanded) (expandedHeight ?: height) else height
+        Row(Modifier.height(selectedHeight).fillMaxWidth()) {
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 LazyColumn(state = verticalScrollState, modifier = Modifier.padding(15.dp)) {
                     itemsIndexed(filters) { index, filter ->
@@ -144,13 +148,15 @@ fun ParamEntrySelector(
                 contentDescription = null,
                 tint = MaterialTheme.colors.onSurface.runIf(minusButtonEnabled.not()) { copy(alpha = 0.2f) },
             )
-            Icon(
-                modifier = Modifier.size(18.dp).clickable {
-                    isExpanded = !isExpanded
-                },
-                imageVector = if (isExpanded) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore,
-                contentDescription = null,
-            )
+            if (expandedHeight != null) {
+                Icon(
+                    modifier = Modifier.size(18.dp).clickable {
+                        isExpanded = !isExpanded
+                    },
+                    imageVector = if (isExpanded) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore,
+                    contentDescription = null,
+                )
+            }
             val defaultExpressionInput by remember(value.filters.size) {
                 mutableStateOf(value.filters.indices.joinToString(" and ") { "#${it + 1}" })
             }
@@ -189,7 +195,7 @@ fun ParamEntrySelector(
                 }
             }
             BasicTextField(
-                modifier = Modifier.width(350.dp)
+                modifier = Modifier.weight(1f)
                     .background(White20, MaterialTheme.shapes.small)
                     .padding(vertical = 4.dp, horizontal = 10.dp),
                 value = expressionInput,
@@ -208,43 +214,51 @@ fun ParamEntrySelector(
                 ),
                 cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
             )
-            Spacer(Modifier.weight(1f))
-            if (isError || parseErrors.any { it }) {
-                Text(
-                    text = string(Strings.PluginEntrySelectorPreviewSummaryError),
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.error,
-                )
-            } else {
-                key(filters, value.rawExpression) {
-                    var filterError = false
-                    val text = if (js == null) {
-                        string(Strings.PluginEntrySelectorPreviewSummaryInitializing)
-                    } else if (entries != null && labelerConf != null) {
-                        val selectedCount = runCatching {
-                            EntrySelector(filters.toList(), value.rawExpression).select(entries, labelerConf, js).size
-                        }
-                            .onFailure {
-                                if (hasClickedApply.value) {
-                                    onError(it)
-                                }
-                                filterError = true
-                            }
-                            .getOrNull()
-                        if (selectedCount != null) {
-                            string(Strings.PluginEntrySelectorPreviewSummary, selectedCount, entries.size)
-                        } else {
-                            string(Strings.PluginEntrySelectorPreviewSummaryError)
-                        }
-                    } else {
-                        ""
-                    }
-                    onParseErrorChange(filterError)
+            Spacer(Modifier.width(20.dp))
+            Box(
+                modifier = Modifier.widthIn(min = 100.dp),
+            ) {
+                if (isError || parseErrors.any { it }) {
                     Text(
-                        text = text,
+                        text = string(Strings.PluginEntrySelectorPreviewSummaryError),
                         style = MaterialTheme.typography.caption,
-                        color = if (filterError) MaterialTheme.colors.error else MaterialTheme.colors.onSurface,
+                        color = MaterialTheme.colors.error,
                     )
+                } else {
+                    key(filters, value.rawExpression) {
+                        var filterError = false
+                        val text = if (js == null) {
+                            string(Strings.PluginEntrySelectorPreviewSummaryInitializing)
+                        } else if (entries != null && labelerConf != null) {
+                            val selectedCount = runCatching {
+                                EntrySelector(filters.toList(), value.rawExpression).select(
+                                    entries,
+                                    labelerConf,
+                                    js,
+                                ).size
+                            }
+                                .onFailure {
+                                    if (hasClickedApply.value) {
+                                        onError(it)
+                                    }
+                                    filterError = true
+                                }
+                                .getOrNull()
+                            if (selectedCount != null) {
+                                string(Strings.PluginEntrySelectorPreviewSummary, selectedCount, entries.size)
+                            } else {
+                                string(Strings.PluginEntrySelectorPreviewSummaryError)
+                            }
+                        } else {
+                            ""
+                        }
+                        onParseErrorChange(filterError)
+                        Text(
+                            text = text,
+                            style = MaterialTheme.typography.caption,
+                            color = if (filterError) MaterialTheme.colors.error else MaterialTheme.colors.onSurface,
+                        )
+                    }
                 }
             }
         }

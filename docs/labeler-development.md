@@ -745,7 +745,7 @@ how to create a project from the input file or folder.
 
 #### Output
 
-- `projectFile`: The [File](file-api.md) object of the project file that will be created. The file should be a `.vlp`
+- `projectFile`: The [File](file-api.md) object of the project file that will be created. The file should be a `.lbp`
   file.
 - `sampleDirectory`: The [File](file-api.md) object of the root directory containing the sample files.
 - `cacheDirectory`: The [File](file-api.md) object of the cache directory. If not set, the default cache directory will

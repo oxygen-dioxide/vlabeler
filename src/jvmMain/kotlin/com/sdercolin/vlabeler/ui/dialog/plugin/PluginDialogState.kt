@@ -1,6 +1,8 @@
 package com.sdercolin.vlabeler.ui.dialog.plugin
 
 import androidx.compose.material.SnackbarHostState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import com.sdercolin.vlabeler.env.Log
 import com.sdercolin.vlabeler.model.AppRecord
 import com.sdercolin.vlabeler.model.BasePlugin

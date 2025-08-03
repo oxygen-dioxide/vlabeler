@@ -41,6 +41,7 @@ fun WithTooltip(
         TooltipArea(
             modifier = modifier,
             tooltip = { Tooltip(text = tooltip) },
+            delayMillis = 200,
         ) {
             content()
         }

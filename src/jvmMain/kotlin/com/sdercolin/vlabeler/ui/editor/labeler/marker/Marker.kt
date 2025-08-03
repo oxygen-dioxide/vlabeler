@@ -313,12 +313,60 @@ private fun FieldBorderCanvas(
                             state.getEntryIndexesByBorderIndex(pointIndex).second == entryIndex
                         ) 1f else IDLE_LINE_ALPHA
                     if (border in screenRange) {
+                        var strokeWidth: Float = STROKE_WIDTH
+                        var color = borderColor.copy(alpha = borderLineAlpha)
+                        if (editorState.project.multipleEditMode && editorConf.currentEntryBorderHighlight.enabled) {
+                            val currentIndex = editorState.project.currentModule.currentIndex
+                            if (currentIndex == entryIndex || currentIndex == entryIndex - 1) {
+                                strokeWidth = editorConf.currentEntryBorderHighlight.width
+                                color = editorConf.currentEntryBorderHighlight.color.toColor()
+                            }
+                        }
+                        if (editorState.project.multipleEditMode &&
+                            editorConf.cursorPositionEntryBorderHighlight.enabled
+                        ) {
+                            fun applyHighlight() {
+                                strokeWidth = editorConf.cursorPositionEntryBorderHighlight.width
+                                color = editorConf.cursorPositionEntryBorderHighlight.color.toColor()
+                            }
+                            if (cursorState.value.mouse != MarkerCursorState.Mouse.Dragging) {
+                                val position = cursorState.value.position
+                                if (position != null) {
+                                    val entryLeftBorder = state.entryBorders[entryIndex - 1]
+                                    val entryRightBorder = state.entryBorders[entryIndex]
+                                    if (entryLeftBorder <= position && position < entryRightBorder) {
+                                        // The current entry is the one that the cursor is hovering
+                                        applyHighlight()
+                                    }
+                                    val previousEntryLeftBorder = state.entryBorders.getOrNull(index = entryIndex - 2)
+                                    if (previousEntryLeftBorder != null &&
+                                        previousEntryLeftBorder <= position &&
+                                        position < entryLeftBorder
+                                    ) {
+                                        // The previous entry is the one that the cursor is hovering
+                                        // So we also need to draw this line, because it's the right border
+                                        // of the previous entry
+                                        applyHighlight()
+                                    }
+                                }
+                            } else {
+                                // While dragging, the cursor position is not stable,
+                                // so we direct decide by the point index
+                                val actualPointIndex = cursorState.value.relativeDraggingIndexOffset?.plus(pointIndex)
+                                if (actualPointIndex != null) {
+                                    val entryIndexesBeingDragged = state.getEntryIndexesByBorderIndex(actualPointIndex)
+                                    if (entryIndex in entryIndexesBeingDragged.toList()) {
+                                        applyHighlight()
+                                    }
+                                }
+                            }
+                        }
                         val relativeBorder = border - screenRange.start
                         drawLine(
-                            color = borderColor.copy(alpha = borderLineAlpha),
+                            color = color,
                             start = Offset(relativeBorder, 0f),
                             end = Offset(relativeBorder, canvasHeight),
-                            strokeWidth = STROKE_WIDTH,
+                            strokeWidth = strokeWidth,
                         )
                     }
                 }
@@ -526,7 +574,8 @@ private fun MarkerState.handleCursorMove(
         if (newPointIndex == NONE_POINT_INDEX) {
             cursorState.update { moveToNothing() }
         } else {
-            cursorState.update { moveToHover(newPointIndex) }
+            val newPointPosition = getPointPosition(newPointIndex)
+            cursorState.update { moveToHover(newPointIndex, newPointPosition) }
         }
     }
 }

@@ -185,7 +185,7 @@ suspend fun awaitLoadProject(
         workingDirectoryPath = workingDirectory,
         projectName = projectName,
         cacheDirectoryPath = cacheDirectory,
-    ).makeRelativePathsIfPossible()
+    ).makeRelativePathsIfPossible().applyCurrentEntryFilter()
     appState.openEditor(fixedProject)
     if (!autoSaved) {
         appState.discardAutoSavedProjects()

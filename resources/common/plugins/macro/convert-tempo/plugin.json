@@ -1,0 +1,79 @@
+{
+    "name": "convert-tempo",
+    "version": 1,
+    "type": "macro",
+    "displayedName": {
+        "en": "Convert tempo",
+        "zh": "转换节奏",
+        "ja": "テンポを変換する",
+        "ko": "템포 변환"
+    },
+    "author": "adlez27",
+    "email": "adlez.dysto@gmail.com",
+    "description": {
+        "en": "Convert parameter timing from original tempo to new tempo",
+        "zh": "将参数时序从原始节奏转换为新节奏",
+        "ja": "パラメーターのタイミングを元のテンポから新しいテンポに変換する",
+        "ko": "파라미터 타이밍을 원래 템포에서 새 템포로 변환하기"
+    },
+    "website": "https://github.com/adlez27/vlabeler/",
+    "supportedLabelFileExtension": "ini",
+    "parameters": {
+        "list": [
+            {
+                "type": "float",
+                "name": "source",
+                "label": {
+                    "en": "Original tempo",
+                    "zh": "原始节奏",
+                    "ja": "元のテンポ",
+                    "ko": "오리지널 템포"
+                },
+                "defaultValue": 100.0
+            },
+            {
+                "type": "float",
+                "name": "target",
+                "label": {
+                    "en": "New tempo",
+                    "zh": "新节奏",
+                    "ja": "新テンポ",
+                    "ko": "새로운 템포"
+                },
+                "defaultValue": 120.0
+            },
+            {
+                "type": "enum",
+                "name": "parameters",
+                "label": {
+                    "en": "Parameters to convert",
+                    "zh": "要编辑的参数",
+                    "ja": "編集するパラメーター",
+                    "ko": "편집할 파라미터"
+                },
+                "defaultValue": "offset",
+                "options": [
+                    "offset",
+                    "all"
+                ],
+                "optionDisplayedNames": [
+                    {
+                        "en": "Offset only",
+                        "zh": "仅左边界",
+                        "ja": "左ブランクのみ",
+                        "ko": "오프셋 전용"
+                    },
+                    {
+                        "en": "All parameters",
+                        "zh": "所有参数",
+                        "jp": "すべてのパラメータ",
+                        "ko": "모든 매개변수"
+                    }
+                ]
+            }
+        ]
+    },
+    "scriptFiles": [
+        "convert-tempo.js"
+    ]
+}

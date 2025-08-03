@@ -2,14 +2,15 @@ package com.sdercolin.vlabeler.ui.dialog.plugin
 
 import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.sdercolin.vlabeler.model.AppRecord
 import com.sdercolin.vlabeler.model.BasePlugin
 import com.sdercolin.vlabeler.model.Parameter
 import com.sdercolin.vlabeler.model.Project
-import com.sdercolin.vlabeler.ui.string.Strings
-import com.sdercolin.vlabeler.ui.string.string
-import com.sdercolin.vlabeler.ui.string.stringStatic
+import com.sdercolin.vlabeler.ui.string.*
 import com.sdercolin.vlabeler.util.ParamMap
 import com.sdercolin.vlabeler.util.Url
 import com.sdercolin.vlabeler.util.toParamMap
@@ -23,6 +24,8 @@ abstract class BasePluginDialogState(paramMap: ParamMap) {
     protected abstract val save: (ParamMap) -> Unit
     abstract suspend fun import(target: BasePluginPresetTarget)
     abstract suspend fun export(target: BasePluginPresetTarget)
+    var resetKey: Int by mutableStateOf(0)
+        private set
 
     open fun isChangeable(parameterName: String): Boolean = true
 
@@ -103,6 +106,7 @@ abstract class BasePluginDialogState(paramMap: ParamMap) {
         getResetParamMap().map { it.value }.forEachIndexed { index, value ->
             params[index] = value
         }
+        resetKey++
     }
 
     fun openEmail() {

@@ -15,5 +15,5 @@ executeCommand("ls", "-l")
 
 ### Source file
 
-See the [JavaScript source code](../src/jvmMain/resources/js/env.js)
+See the [JavaScript source code](../src/jvmMain/resources/js/command_line.js)
 and [Kotlin source code](../src/jvmMain/kotlin/com/sdercolin/vlabeler/util/CommandLine.kt) for more details.

@@ -1,5 +1,6 @@
 package com.sdercolin.vlabeler.ui.common
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +37,7 @@ fun SearchBar(
     onSubmit: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     trailingContent: @Composable () -> Unit = {},
+    disabledContent: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier.fillMaxWidth().height(50.dp).padding(horizontal = 15.dp),
@@ -43,20 +45,24 @@ fun SearchBar(
     ) {
         Icon(Icons.Default.Search, null, tint = MaterialTheme.colors.onSurface)
         Spacer(Modifier.width(15.dp))
-        BasicTextField(
-            value = text,
-            modifier = Modifier.weight(1f)
-                .padding(vertical = 10.dp)
-                .runIfHave(onFocusedChanged) { callback -> onFocusChanged { callback(it.hasFocus) } }
-                .runIfHave(focusRequester) { focusRequester(it) }
-                .runIfHave(onPreviewKeyEvent) { onPreviewKeyEvent(it) },
-            onValueChange = onTextChange,
-            textStyle = MaterialTheme.typography.body2.copy(color = MaterialTheme.colors.onBackground),
-            cursorBrush = SolidColor(MaterialTheme.colors.onBackground),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions(onDone = { onSubmit?.invoke() }),
-        )
+        Box(Modifier.weight(1f).padding(vertical = 10.dp)) {
+            BasicTextField(
+                value = text,
+                modifier = Modifier.fillMaxWidth()
+                    .runIfHave(onFocusedChanged) { callback -> onFocusChanged { callback(it.hasFocus) } }
+                    .runIfHave(focusRequester) { focusRequester(it) }
+                    .runIfHave(onPreviewKeyEvent) { onPreviewKeyEvent(it) },
+                onValueChange = onTextChange,
+                textStyle = MaterialTheme.typography.body2.copy(color = MaterialTheme.colors.onBackground),
+                cursorBrush = SolidColor(MaterialTheme.colors.onBackground),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = { onSubmit?.invoke() }),
+                enabled = disabledContent == null,
+                readOnly = disabledContent != null,
+            )
+            disabledContent?.invoke()
+        }
         trailingContent()
     }
 }

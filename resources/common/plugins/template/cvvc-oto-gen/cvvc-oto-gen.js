@@ -24,15 +24,22 @@ if (repeatSuffix.indexOf("{number}") < 0) {
 
 let prefix = params["prefix"]
 let separator = params["separator"]
+let headSeparator = params["headSeparator"]
 let appendSuffix = params["appendSuffix"]
 let suffixes = params["suffixes"].split(',')
 if (!suffixes.includes(appendSuffix)) {
     suffixes.push(appendSuffix)
 }
 
-let fixBuffer = Math.min(params["fixBuffer"], beatLength / 6)
-let consLength = Math.min(params["consLength"], beatLength / 5)
-let ovlVC = Math.min(params["ovlVC"], beatLength / 6)
+let fixBuffer = params["fixBuffer"]
+let consLength = params["consLength"]
+let ovlVC = params["ovlVC"]
+if (params["tempoComp"]) {
+    fixBuffer = Math.min(fixBuffer, beatLength / 6)
+    consLength = Math.min(consLength, beatLength / 5)
+    ovlVC = Math.min(ovlVC, beatLength / 6)
+}
+let ovlRatio = params["ovlRatio"]
 
 let useHeadCV = params["useHeadCV"]
 let useVCV = params["useVCV"]
@@ -149,12 +156,12 @@ function getAliasWithCount(alias, isOther, isSingleC) {
     return thisAlias
 }
 
-function pushHeadCV(sample, alias, nextHasConsonant) {
+function pushHeadCV(sample, index, alias, nextHasConsonant) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
-    let start = offset - consLength - 10
-    let ovl = offset - consLength
-    let preu = offset
+    let start = offset + index * beatLength - consLength - 10
+    let ovl = start + 10
+    let preu = start
     let fixed = preu + fixBuffer
     let cutoff = 0 - (10 + consLength + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
 
@@ -169,12 +176,12 @@ function pushHeadCV(sample, alias, nextHasConsonant) {
     push(entry, "CV")
 }
 
-function pushHeadV(sample, alias, nextHasConsonant) {
+function pushHeadV(sample, index, alias, nextHasConsonant) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
-    let start = offset - 20
-    let ovl = offset - 10
-    let preu = offset
+    let start = offset + index * beatLength - 20
+    let ovl = start + 10
+    let preu = start
     let fixed = preu + fixBuffer
     let cutoff = 0 - (20 + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
 
@@ -193,7 +200,7 @@ function pushCV(sample, index, alias, nextHasConsonant) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
     let start = offset + index * beatLength - consLength
-    let ovl = start + (consLength / 2)
+    let ovl = start + (consLength / ovlRatio)
     let preu = start + consLength
     let fixed = preu + fixBuffer
     let cutoff = 0 - (consLength + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
@@ -212,11 +219,11 @@ function pushCV(sample, index, alias, nextHasConsonant) {
 function pushVC(sample, index, alias) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
-    let start = offset + index * beatLength - consLength - 2 * ovlVC
+    let start = offset + index * beatLength - consLength - ovlRatio * ovlVC
     let ovl = start + ovlVC
-    let preu = start + 2 * ovlVC
-    let fixed = start + 2 * ovlVC + 10
-    let cutoff = 0 - (2 * ovlVC + consLength)
+    let preu = start + ovlRatio * ovlVC
+    let fixed = start + ovlRatio * ovlVC + 10
+    let cutoff = 0 - (ovlRatio * ovlVC + consLength)
 
     let end = start - cutoff
     let points = [fixed, preu, ovl, start]
@@ -233,8 +240,8 @@ function pushSoloC(sample, index, alias) {
     let thisAlias = getAliasWithCount(alias, false, true)
 
     let start = offset + index * beatLength - consLength
-    let ovl = start + consLength / 2
-    let preu = start + consLength / 2
+    let ovl = start + consLength / ovlRatio
+    let preu = start + consLength / ovlRatio
     let fixed = start
     let cutoff = 0 - (consLength)
 
@@ -272,11 +279,11 @@ function pushSoloV(sample, index, alias, nextHasConsonant) {
 function pushVV(sample, index, alias, nextHasConsonant) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
-    let start = offset + index * beatLength - 2 * ovlVC
+    let start = offset + index * beatLength - ovlRatio * ovlVC
     let ovl = start + ovlVC
-    let preu = ovl + ovlVC
+    let preu = start + ovlRatio * ovlVC
     let fixed = preu + fixBuffer
-    let cutoff = 0 - (2 * ovlVC + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
+    let cutoff = 0 - (ovlRatio * ovlVC + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
 
     let end = start - cutoff
     let points = [fixed, preu, ovl, start]
@@ -292,11 +299,11 @@ function pushVV(sample, index, alias, nextHasConsonant) {
 function pushVCV(sample, index, alias, nextHasConsonant) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
-    let start = offset + index * beatLength - consLength - 2 * ovlVC
+    let start = offset + index * beatLength - consLength - ovlRatio * ovlVC
     let ovl = start + ovlVC
     let preu = ovl + ovlVC + consLength
     let fixed = preu + fixBuffer
-    let cutoff = 0 - (2 * ovlVC + consLength + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
+    let cutoff = 0 - (ovlRatio * ovlVC + consLength + beatLength - ovlVC - (nextHasConsonant ? consLength : 0))
 
     let end = start - cutoff
     let points = [fixed, preu, ovl, start]
@@ -312,11 +319,11 @@ function pushVCV(sample, index, alias, nextHasConsonant) {
 function pushTail(sample, index, alias) {
     let thisAlias = getAliasWithCount(alias, false, false)
 
-    let start = offset + index * beatLength - 2 * ovlVC
+    let start = offset + index * beatLength - ovlRatio * ovlVC
     let ovl = start + ovlVC
-    let preu = start + 2 * ovlVC
-    let fixed = start + 2 * ovlVC + 10
-    let cutoff = 0 - (2 * ovlVC + 20)
+    let preu = start + ovlRatio * ovlVC
+    let fixed = start + ovlRatio * ovlVC + 10
+    let cutoff = 0 - (ovlRatio * ovlVC + 20)
 
     let end = start - cutoff
     let points = [fixed, preu, ovl, start]
@@ -354,8 +361,12 @@ function parseSample(sample) {
         pushOther(sample)
         return
     }
-
-    let rest = (getNameWithoutExtension(sample) + appendSuffix).slice(prefix.length)
+    let totalName = getNameWithoutExtension(sample)
+    let suffix = suffixes.find(suffix => totalName.endsWith(suffix))
+    if (!suffix) {
+        totalName += appendSuffix
+    }
+    let rest = totalName.slice(prefix.length)
     let index = 0
     let lastVowel = ""
 
@@ -364,6 +375,9 @@ function parseSample(sample) {
     }
 
     while (rest !== "") {
+        if (debug) {
+            console.log("New iteration with rest: " + rest + ", Last Vowel: " + lastVowel + ", Index: " + index)
+        }
         let matched = symbols.find(text => rest.startsWith(text))
         if (matched === undefined) {
             // handle suffix
@@ -379,10 +393,19 @@ function parseSample(sample) {
 
         let nextHasConsonant = false
         let next = rest.slice(matched.length)
-        if (separator !== "" && next.startsWith(separator)) {
+        let isHeadSeparatorMatched = false
+        if (headSeparator !== "" && next.startsWith(headSeparator)) {
+            isHeadSeparatorMatched = true
+            if (debug) {
+                console.log("Head separator matched")
+            }
+        } else if (separator !== "" && next.startsWith(separator)) {
             next = next.slice(separator.length)
         }
         let nextMatched = symbols.find(text => next.startsWith(text))
+        if (debug) {
+            console.log(`Matched: ${matched}, Next: ${nextMatched}, Last Vowel: ${lastVowel}`)
+        }
         if (nextMatched !== undefined) {
             let nextCons = symbolPhonemeMap.get(nextMatched)[0]
             if (nextCons) {
@@ -400,12 +423,12 @@ function parseSample(sample) {
             pushSoloC(sample, index, consonant)
         }
 
-        if (index === 0) {
+        if (lastVowel === "") {
             let aliasHeadCV = "- " + matched
             if (consonant === "") {
-                pushHeadV(sample, aliasHeadCV, nextHasConsonant)
+                pushHeadV(sample, index, aliasHeadCV, nextHasConsonant)
             } else if (useHeadCV) {
-                pushHeadCV(sample, aliasHeadCV, nextHasConsonant)
+                pushHeadCV(sample, index, aliasHeadCV, nextHasConsonant)
             }
         }
 
@@ -419,7 +442,13 @@ function parseSample(sample) {
         }
 
         if (consonant !== "") {
-            pushCV(sample, index, matched, nextHasConsonant)
+            if (lastVowel === "") {
+                if (!useHeadCV) {
+                    pushCV(sample, index, matched, nextHasConsonant)
+                }
+            } else {
+                pushCV(sample, index, matched, nextHasConsonant)
+            }
         } else {
             pushSoloV(sample, index, matched, nextHasConsonant)
         }
@@ -427,6 +456,13 @@ function parseSample(sample) {
         index++
         lastVowel = vowel
         rest = rest.slice(matched.length)
+        if (isHeadSeparatorMatched) {
+            let alias = (lastVowel + " " + appendSuffix).trim()
+            pushTail(sample, index, alias)
+            rest = rest.slice(headSeparator.length)
+            lastVowel = ""
+            index++
+        }
         if (separator !== "" && rest.startsWith(separator)) {
             rest = rest.slice(separator.length)
         }

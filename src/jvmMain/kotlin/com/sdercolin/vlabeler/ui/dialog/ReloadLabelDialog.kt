@@ -189,7 +189,7 @@ private fun RowScope.EntryItemSummary(index: Int, entry: Entry, color: Color) {
     Row(modifier = Modifier.weight(1f).fillMaxHeight().background(color = color).padding(5.dp)) {
         NavigatorListItemNumber(index)
         Column(Modifier.fillMaxWidth()) {
-            NavigatorItemSummary(entry.name, entry.sample, hideSampleExtension = false, isEntry = true)
+            NavigatorItemSummary(entry.name, entry.sample)
             Spacer(Modifier.height(5.dp))
             Text(
                 text = "Start: ${entry.start}, End: ${entry.end}",

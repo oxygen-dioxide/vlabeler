@@ -1,5 +1,7 @@
 package com.sdercolin.vlabeler.ui.theme
 
+import androidx.compose.foundation.DefaultContextMenuRepresentation
+import androidx.compose.foundation.LocalContextMenuRepresentation
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Typography
 import androidx.compose.material.darkColors
@@ -50,6 +52,12 @@ private fun getTypography(defaultFontFamily: FontFamily?) = Typography(
     ),
 )
 
+private val AppContextMenuRepresentation = DefaultContextMenuRepresentation(
+    backgroundColor = colors.surface,
+    textColor = colors.onSurface,
+    itemHoverColor = colors.onSurface.copy(alpha = 0.04f),
+)
+
 @Composable
 fun AppTheme(viewConf: AppConf.View? = null, content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalLanguage provides (viewConf?.language ?: Language.default)) {
@@ -63,7 +71,11 @@ fun AppTheme(viewConf: AppConf.View? = null, content: @Composable () -> Unit) {
                     viewConf?.fontFamilyName ?: AppConf.View.DEFAULT_FONT_FAMILY_NAME,
                 ),
             ),
-            content = content,
+            content = {
+                CompositionLocalProvider(LocalContextMenuRepresentation provides AppContextMenuRepresentation) {
+                    content()
+                }
+            },
         )
     }
 }

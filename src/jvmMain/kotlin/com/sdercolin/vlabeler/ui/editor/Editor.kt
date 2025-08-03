@@ -118,6 +118,7 @@ fun Editor(state: EditorState, appState: AppState) {
                     jumpToEntry = jumpToEntry,
                     onFocusedChanged = onFocusedChanged,
                     dialogState = appState,
+                    consumeEditorEntryContextAction = state::consumeEditorEntryContextAction,
                 )
             }
         }

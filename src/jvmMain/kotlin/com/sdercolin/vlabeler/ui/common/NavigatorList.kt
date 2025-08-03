@@ -5,6 +5,9 @@ package com.sdercolin.vlabeler.ui.common
 import androidx.compose.foundation.ScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -38,29 +41,35 @@ import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.sdercolin.vlabeler.env.isReleased
+import com.sdercolin.vlabeler.model.LabelerConf
 import com.sdercolin.vlabeler.model.Project
 import com.sdercolin.vlabeler.ui.theme.LightGray
+import com.sdercolin.vlabeler.util.alpha
 import com.sdercolin.vlabeler.util.animateScrollToShowItem
-import com.sdercolin.vlabeler.util.runIf
+import com.sdercolin.vlabeler.util.runIfHave
 
-interface NavigatorListState<T : Any> {
+interface NavigatorListState<S : ContextMenuSubject<A>, A : ContextMenuAction<A>> {
 
     val currentIndex: Int
     var selectedIndex: Int?
-    var searchResult: List<IndexedValue<T>>
+    var isFiltered: Boolean
+    var searchResult: List<S>
     var hasFocus: Boolean
+
+    val labelerConf: LabelerConf
 
     fun submit(index: Int)
     fun updateProject(project: Project)
-    fun calculateResult(): List<IndexedValue<T>>
+    fun calculateResult(): Pair<Boolean, List<S>>
     fun updateSearch() {
-        val newResults = calculateResult()
+        val (active, newResults) = calculateResult()
         searchResult = newResults
         selectedIndex = if (hasFocus) {
             if (newResults.isNotEmpty()) 0 else null
         } else {
             newResults.indexOfFirst { it.index == currentIndex }.takeIf { it >= 0 }
         }
+        isFiltered = active
     }
 
     fun submitCurrent() {
@@ -69,7 +78,9 @@ interface NavigatorListState<T : Any> {
     }
 }
 
-fun <T : Any> NavigatorListState<T>.onPreviewKeyEvent(event: KeyEvent): Boolean {
+fun <S : ContextMenuSubject<A>, A : ContextMenuAction<A>> NavigatorListState<S, A>.onPreviewKeyEvent(
+    event: KeyEvent,
+): Boolean {
     if (searchResult.isEmpty()) return false
     val index = selectedIndex ?: return false
     return when {
@@ -86,9 +97,10 @@ fun <T : Any> NavigatorListState<T>.onPreviewKeyEvent(event: KeyEvent): Boolean 
 }
 
 @Composable
-fun <T : Any> ColumnScope.NavigatorListBody(
-    state: NavigatorListState<T>,
-    itemContent: @Composable RowScope.(item: IndexedValue<T>) -> Unit,
+fun <S : ContextMenuSubject<A>, A : ContextMenuAction<A>> ColumnScope.NavigatorListBody(
+    state: NavigatorListState<S, A>,
+    itemContent: @Composable RowScope.(item: S) -> Unit,
+    contextMenuActionConsumer: ((A) -> Unit)?,
 ) {
     var pressedIndex by remember { mutableStateOf<Int?>(null) }
     val scrollState = rememberLazyListState(initialFirstVisibleItemIndex = state.currentIndex)
@@ -107,34 +119,44 @@ fun <T : Any> ColumnScope.NavigatorListBody(
     ) {
         LazyColumn(state = scrollState) {
             itemsIndexed(state.searchResult) { index, item ->
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .height(30.dp)
-                        .runIf(index == state.selectedIndex) {
-                            background(color = MaterialTheme.colors.primaryVariant)
-                        }
-                        .padding(end = 20.dp)
-                        .onPointerEvent(PointerEventType.Press) {
-                            if (it.buttons.isPrimaryPressed.not() || it.buttons.isSecondaryPressed) {
-                                return@onPointerEvent
+                WithContextMenu(items = { item.getContextMenuActions() }, consumer = contextMenuActionConsumer) {
+                    val hoverInteractionSource = remember { MutableInteractionSource() }
+                    val isHovered by hoverInteractionSource.collectIsHoveredAsState()
+                    val backgroundColor = when {
+                        index == state.selectedIndex -> MaterialTheme.colors.primaryVariant
+                        isHovered -> MaterialTheme.colors.primaryVariant.alpha(0.5f)
+                        else -> null
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                            .height(30.dp)
+                            .runIfHave(backgroundColor) {
+                                background(color = it)
                             }
-                            pressedIndex = index
-                            state.selectedIndex = index
-                        }
-                        .onPointerEvent(PointerEventType.Exit) {
-                            if (it.buttons.isPrimaryPressed.not()) return@onPointerEvent
-                            if (pressedIndex == index) {
-                                pressedIndex = null
+                            .hoverable(hoverInteractionSource)
+                            .padding(end = 20.dp)
+                            .onPointerEvent(PointerEventType.Press) {
+                                if (it.buttons.isPrimaryPressed.not() || it.buttons.isSecondaryPressed) {
+                                    return@onPointerEvent
+                                }
+                                pressedIndex = index
+                                state.selectedIndex = index
                             }
-                        }
-                        .onPointerEvent(PointerEventType.Release) {
-                            if (pressedIndex == index) {
-                                state.submit(state.searchResult[index].index)
+                            .onPointerEvent(PointerEventType.Exit) {
+                                if (it.buttons.isPrimaryPressed.not()) return@onPointerEvent
+                                if (pressedIndex == index) {
+                                    pressedIndex = null
+                                }
                             }
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    itemContent(item)
+                            .onPointerEvent(PointerEventType.Release) {
+                                if (pressedIndex == index) {
+                                    state.submit(state.searchResult[index].index)
+                                }
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        itemContent(item)
+                    }
                 }
             }
         }
@@ -156,7 +178,7 @@ fun NavigatorListItemNumber(index: Int) {
 }
 
 @Composable
-fun NavigatorItemSummary(name: String, subtext: String, hideSampleExtension: Boolean, isEntry: Boolean = false) {
+fun NavigatorItemSummary(name: String, subtext: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         BasicText(
             text = name,
@@ -165,9 +187,7 @@ fun NavigatorItemSummary(name: String, subtext: String, hideSampleExtension: Boo
             style = MaterialTheme.typography.body2.copy(color = MaterialTheme.colors.onBackground),
         )
         BasicText(
-            text = subtext.runIf(isEntry && hideSampleExtension) {
-                substringBeforeLast('.')
-            },
+            text = subtext,
             modifier = Modifier.padding(start = 10.dp, top = 3.dp),
             overflow = TextOverflow.Ellipsis,
             maxLines = 1,

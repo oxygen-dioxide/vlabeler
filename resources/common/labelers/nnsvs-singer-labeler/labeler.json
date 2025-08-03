@@ -1,6 +1,6 @@
 {
     "name": "nnsvs-singer.default",
-    "version": 12,
+    "version": 13,
     "serialVersion": 2,
     "singleFile": false,
     "extension": "lab",
@@ -24,6 +24,7 @@
     "displayOrder": 0,
     "continuous": true,
     "allowSameNameEntry": true,
+    "defaultEntryName": "pau",
     "defaultValues": [
         0,
         0

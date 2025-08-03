@@ -19,17 +19,16 @@ import java.io.File
  * module.
  *
  * @property name The unique name of the module. If "" (empty string), the module is displayed as `(Root)`. For labelers
- *     that do not support multiple modules, this should always be "".
+ *    that do not support multiple modules, this should always be "".
  * @property sampleDirectoryPath The path of the sample directory. Should always be under [Project.rootSampleDirectory].
- *     Basically, it's stored as a relative path to [Project.rootSampleDirectory]. Use [getSampleDirectory] to get the
- *     actual directory.
+ *    Basically, it's stored as a relative path to [Project.rootSampleDirectory]. Use [getSampleDirectory] to get the
+ *    actual directory.
  * @property entries The list of entries in the module.
  * @property currentIndex The index of the current entry in [entries].
  * @property extras The extra info of the module, where the key is the `name` of [LabelerConf.moduleExtraFields].
  * @property rawFilePath The path of the target raw label file. Should always be under [Project.rootSampleDirectory].
- *     Basically, it's stored as a relative path to [Project.rootSampleDirectory]. Use [getRawFile] to get the actual
- *     file.
- * @property entryFilter The filter that is applied to the entries.
+ *    Basically, it's stored as a relative path to [Project.rootSampleDirectory]. Use [getRawFile] to get the actual
+ *    file.
  */
 @Serializable
 @Immutable
@@ -41,6 +40,9 @@ data class Module(
     val currentIndex: Int,
     val extras: Map<String, String> = emptyMap(),
     val rawFilePath: String? = null,
+    @Transient
+    val filteredEntryIndexes: List<Int> = entries.indices.toList(),
+    @Deprecated("Use Project.entryFilter instead.")
     val entryFilter: EntryFilter? = null,
 ) {
 
@@ -52,7 +54,6 @@ data class Module(
         currentIndex: Int,
         extras: Map<String, String> = emptyMap(),
         rawFilePath: File? = null,
-        entryFilter: EntryFilter? = null,
     ) : this(
         name = name,
         sampleDirectoryPath = if (sampleDirectory.isAbsolute) {
@@ -68,12 +69,7 @@ data class Module(
         } else {
             rawFilePath?.path
         },
-        entryFilter = entryFilter,
     )
-
-    @Transient
-    private val filteredEntryIndexes: List<Int> =
-        entries.indices.filter { entryFilter?.matches(entries[it]) ?: true }
 
     @Transient
     val filteredEntryCount: Int = filteredEntryIndexes.size
@@ -88,7 +84,7 @@ data class Module(
     private val filteredEntryIndexGroupIndexes: List<Pair<Int, List<Int>>> = entryIndexGroups
         .mapIndexed { index, pair -> index to pair.second }
         .map { (groupIndex, entryIndexes) ->
-            groupIndex to entryIndexes.filter { entryFilter?.matches(entries[it]) ?: true }
+            groupIndex to entryIndexes.filter { filteredEntryIndexes.contains(it) }
         }
         .filter { it.second.isNotEmpty() }
 
@@ -257,8 +253,7 @@ data class Module(
         return copy(entries = entries, currentIndex = index)
     }
 
-    fun removeCurrentEntry(labelerConf: LabelerConf): Module {
-        val index = currentIndex
+    fun removeEntry(index: Int, labelerConf: LabelerConf): Module {
         val entries = entries.toMutableList()
         val removed = requireNotNull(entries.removeAt(index))
         val newIndex = (index - 1).coerceAtLeast(0)
@@ -502,7 +497,6 @@ data class JsModule(
     val currentIndex: Int,
     val extras: Map<String, String>,
     val rawFilePath: String?,
-    val entryFilter: EntryFilter?,
 ) {
     fun toModule(rootDirectory: File) = Module(
         rootDirectory = rootDirectory,
@@ -512,7 +506,6 @@ data class JsModule(
         currentIndex = currentIndex,
         extras = extras,
         rawFilePath = rawFilePath?.toFile(),
-        entryFilter = entryFilter,
     )
 }
 
@@ -523,5 +516,4 @@ fun Module.toJs(project: Project) = JsModule(
     currentIndex = currentIndex,
     extras = extras,
     rawFilePath = getRawFile(project)?.absolutePath,
-    entryFilter = entryFilter,
 )

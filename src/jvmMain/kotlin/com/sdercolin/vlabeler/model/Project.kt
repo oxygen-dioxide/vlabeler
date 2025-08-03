@@ -3,6 +3,8 @@ package com.sdercolin.vlabeler.model
 import androidx.compose.runtime.Immutable
 import com.sdercolin.vlabeler.env.Log
 import com.sdercolin.vlabeler.env.isDebug
+import com.sdercolin.vlabeler.exception.FailedToCreateProjectException
+import com.sdercolin.vlabeler.exception.FailedToCreateProjectNoSampleException
 import com.sdercolin.vlabeler.exception.InvalidCreatedProjectException
 import com.sdercolin.vlabeler.exception.InvalidEditedProjectException
 import com.sdercolin.vlabeler.exception.ProjectConstructorRuntimeException
@@ -35,10 +37,10 @@ import java.io.File
  * @property version The version of the project file. Should be [PROJECT_VERSION] when created.
  * @property rootSampleDirectoryPath The directory where all sample files are stored. Should always be an absolute path.
  * @property workingDirectoryPath The directory where the project file is stored. Can be relative to
- *     [rootSampleDirectory].
+ *    [rootSampleDirectory].
  * @property projectName The name of the project. Should be the same as the project file name without extension.
  * @property cacheDirectoryPath The directory where all cache files are stored. Can be relative to
- *     [rootSampleDirectory].
+ *    [rootSampleDirectory].
  * @property originalLabelerConf The original [LabelerConf] instance stored in the project file.
  * @property labelerConf The injected [LabelerConf] instance with [labelerParams].
  * @property labelerParams The parameters of the labeler.
@@ -47,6 +49,7 @@ import java.io.File
  * @property modules The modules in the project, which contains all actual content.
  * @property currentModuleIndex The index of the current module.
  * @property autoExport Whether to export the project automatically when the project is saved.
+ * @property entryFilter The filter for entries.
  */
 @Serializable
 @Immutable
@@ -69,6 +72,7 @@ data class Project(
     val modules: List<Module>,
     val currentModuleIndex: Int,
     val autoExport: Boolean,
+    val entryFilter: EntryFilter? = null,
 ) {
     val rootSampleDirectory: File
         get() = rootSampleDirectoryPath.toFile()
@@ -108,15 +112,33 @@ data class Project(
     fun updateModule(name: String, updater: Module.() -> Module): Project {
         val module = getModule(name)
         val index = modules.indexOf(module)
-        return copy(modules = modules.toMutableList().apply { this[index] = module.updater() })
+        return copy(
+            modules = modules.toMutableList().apply { this[index] = module.updater() },
+        ).applyCurrentEntryFilter()
     }
 
     fun updateCurrentModule(updater: Module.() -> Module): Project {
         return updateModule(currentModule.name, updater)
     }
 
+    fun applyCurrentEntryFilter(): Project = updateEntryFilter(entryFilter)
+
     fun updateEntryFilter(entryFilter: EntryFilter?): Project {
-        return copy(modules = modules.map { it.copy(entryFilter = entryFilter) })
+        val modules = modules.map {
+            val filteredIndexes = entryFilter?.getFilteredIndexes(
+                entries = it.entries,
+                labelerConf = labelerConf,
+            ) ?: it.entries.indices.toList()
+            it.copy(
+                filteredEntryIndexes = filteredIndexes,
+                currentIndex = if (filteredIndexes.contains(it.currentIndex)) {
+                    it.currentIndex
+                } else {
+                    filteredIndexes.firstOrNull() ?: it.currentIndex
+                },
+            )
+        }
+        return copy(modules = modules, entryFilter = entryFilter)
     }
 
     fun getEntriesForEditing(index: Int? = null) =
@@ -133,8 +155,11 @@ data class Project(
         configs: ReloadLabelConfigs = ReloadLabelConfigs(),
     ): Project {
         val mergedEntries = mergeEntryLists(entries, currentModule.entries, diff, configs)
-        val newModule = currentModule.copy(entries = mergedEntries, currentIndex = 0, entryFilter = null)
-        return copy(modules = modules.map { if (it == currentModule) newModule else it })
+        val newModule = currentModule.copy(entries = mergedEntries, currentIndex = 0)
+        return copy(
+            modules = modules.map { if (it == currentModule) newModule else it },
+            entryFilter = null,
+        ).applyCurrentEntryFilter()
     }
 
     fun validate() = this.run {
@@ -187,7 +212,7 @@ data class Project(
     }
 
     companion object {
-        const val PROJECT_VERSION = 3
+        const val PROJECT_VERSION = 4
 
         const val PROJECT_FILE_EXTENSION = "lbp"
         private const val DEFAULT_CACHE_DIRECTORY_SUFFIX = ".$PROJECT_FILE_EXTENSION.caches"
@@ -337,76 +362,88 @@ suspend fun projectOf(
     inputFilePath: String?,
     encoding: String,
     autoExport: Boolean,
-): Result<Project> = runCatching {
-    val labelerTypedParams = labelerParams.let { ParamTypedMap.from(it, rawLabelerConf.parameterDefs) }
-    val labelerConf = labelerParams.let { rawLabelerConf.injectLabelerParams(it) }
-    val moduleDefinitions = if (labelerConf.projectConstructor != null) {
-        val js = JavaScript()
-        js.set("debug", isDebug)
-        js.set("root", sampleDirectory.toFile())
-        js.set("encoding", encoding)
-        js.setJson("acceptedSampleExtensions", Sample.acceptableSampleFileExtensions)
-        js.setJson("resources", labelerConf.readResourceFiles())
-        listOf(
-            Resources.envJs,
-            Resources.fileJs,
-            Resources.expectedErrorJs,
-            Resources.moduleDefinitionJs,
-        ).forEach { js.execResource(it) }
-        js.eval("root = new File(root)")
-        labelerParams.resolve(project = null, js = js).let { js.setJson("params", it) }
-        runCatching {
-            labelerConf.projectConstructor.scripts.getScripts(labelerConf.directory).let { js.eval(it) }
-        }.onFailure { t ->
-            val expected = js.getOrNull("expectedError") ?: false
-            js.close()
-            return if (expected) {
-                Result.failure(ProjectConstructorRuntimeException(t, t.message?.parseJson()))
-            } else {
-                Result.failure(InvalidCreatedProjectException(t))
+): Result<Project> {
+    val createResult = runCatching {
+        val labelerTypedParams = labelerParams.let { ParamTypedMap.from(it, rawLabelerConf.parameterDefs) }
+        val labelerConf = labelerParams.let { rawLabelerConf.injectLabelerParams(it) }
+        val moduleDefinitions = if (labelerConf.projectConstructor != null) {
+            val js = JavaScript()
+            js.set("debug", isDebug)
+            js.set("root", sampleDirectory.toFile())
+            js.set("encoding", encoding)
+            js.setJson("acceptedSampleExtensions", Sample.acceptableSampleFileExtensions)
+            js.setJson("resources", labelerConf.readResourceFiles())
+            listOf(
+                Resources.envJs,
+                Resources.fileJs,
+                Resources.expectedErrorJs,
+                Resources.moduleDefinitionJs,
+            ).forEach { js.execResource(it) }
+            js.eval("root = new File(root)")
+            labelerParams.resolve(project = null, js = js).let { js.setJson("params", it) }
+            runCatching {
+                labelerConf.projectConstructor.scripts.getScripts(labelerConf.directory).let { js.eval(it) }
+            }.onFailure { t ->
+                val expected = js.getOrNull("expectedError") ?: false
+                js.close()
+                if (expected) {
+                    throw ProjectConstructorRuntimeException(t, t.message?.parseJson())
+                } else {
+                    throw InvalidCreatedProjectException(t)
+                }
             }
+            val modules = js.getJson<List<RawModuleDefinition>>("modules")
+            js.close()
+            modules.map { it.toModuleDefinition() }
+        } else {
+            val sampleDirectoryFile = File(sampleDirectory)
+            val sampleFiles = Sample.listSampleFiles(sampleDirectoryFile)
+            val inputFile = inputFilePath?.ifEmpty { null }?.toFile()
+            if (sampleFiles.isEmpty()) {
+                throw FailedToCreateProjectNoSampleException()
+            }
+            listOf(
+                ModuleDefinition(
+                    name = "",
+                    sampleDirectory = sampleDirectoryFile,
+                    sampleFiles = sampleFiles,
+                    inputFiles = listOfNotNull(inputFile),
+                    labelFile = inputFile.takeIf { plugin == null }
+                        ?: labelerConf.defaultInputFilePath?.let { sampleDirectoryFile.resolve(it) },
+                ),
+            )
         }
-        val modules = js.getJson<List<RawModuleDefinition>>("modules")
-        js.close()
-        modules.map { it.toModuleDefinition() }
-    } else {
-        val sampleDirectoryFile = File(sampleDirectory)
-        val sampleFiles = Sample.listSampleFiles(sampleDirectoryFile)
-        val inputFile = inputFilePath?.ifEmpty { null }?.toFile()
-        listOf(
-            ModuleDefinition(
-                name = "",
-                sampleDirectory = sampleDirectoryFile,
-                sampleFiles = sampleFiles,
-                inputFiles = listOfNotNull(inputFile),
-                labelFile = inputFile.takeIf { plugin == null }
-                    ?: labelerConf.defaultInputFilePath?.let { sampleDirectoryFile.resolve(it) },
-            ),
+
+        val modules =
+            parseModule(moduleDefinitions, plugin, sampleDirectory, labelerConf, labelerParams, pluginParams, encoding)
+
+        require(modules.isNotEmpty()) {
+            "No entries were found for any module"
+        }
+        Project(
+            version = PROJECT_VERSION,
+            rootSampleDirectoryPath = sampleDirectory,
+            workingDirectoryPath = workingDirectory,
+            projectName = projectName,
+            cacheDirectoryPath = cacheDirectory,
+            labelerConf = labelerConf,
+            originalLabelerConf = rawLabelerConf,
+            labelerParams = labelerTypedParams,
+            encoding = encoding,
+            modules = modules,
+            currentModuleIndex = 0,
+            autoExport = autoExport,
         )
+    }.onFailure {
+        return Result.failure(FailedToCreateProjectException(it))
     }
-
-    val modules =
-        parseModule(moduleDefinitions, plugin, sampleDirectory, labelerConf, labelerParams, pluginParams, encoding)
-
-    require(modules.isNotEmpty()) {
-        "No entries were found for any module"
+    val createdProject = createResult.getOrThrow()
+    val validatedProjectResult = runCatching {
+        createdProject.validate().makeRelativePathsIfPossible()
+    }.onFailure {
+        return Result.failure(InvalidCreatedProjectException(it))
     }
-    Project(
-        version = PROJECT_VERSION,
-        rootSampleDirectoryPath = sampleDirectory,
-        workingDirectoryPath = workingDirectory,
-        projectName = projectName,
-        cacheDirectoryPath = cacheDirectory,
-        labelerConf = labelerConf,
-        originalLabelerConf = rawLabelerConf,
-        labelerParams = labelerTypedParams,
-        encoding = encoding,
-        modules = modules,
-        currentModuleIndex = 0,
-        autoExport = autoExport,
-    ).validate().makeRelativePathsIfPossible()
-}.onFailure {
-    return Result.failure(InvalidCreatedProjectException(it))
+    return validatedProjectResult
 }
 
 private fun parseModule(

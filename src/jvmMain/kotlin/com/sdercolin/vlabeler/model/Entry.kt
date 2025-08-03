@@ -62,6 +62,9 @@ data class Entry(
     val sampleNameWithoutExtension: String
         get() = sample.substringBeforeLast('.')
 
+    fun getDisplayedSampleName(viewConf: AppConf.View): String =
+        if (viewConf.hideSampleExtension) sampleNameWithoutExtension else sample
+
     fun starToggled() = copy(notes = notes.copy(star = !notes.star))
     fun doneToggled() = copy(notes = notes.copy(done = !notes.done))
     fun done() = copy(notes = notes.copy(done = true))

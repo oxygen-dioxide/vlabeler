@@ -24,6 +24,7 @@ if (repeatSuffix.indexOf("{number}") < 0) {
 
 let prefix = params["prefix"]
 let separator = params["separator"]
+let headSeparator = params["headSeparator"]
 let appendSuffix = params["appendSuffix"]
 let suffixes = params["suffixes"].split(',')
 if (!suffixes.includes(appendSuffix)) {
@@ -121,7 +122,7 @@ function parseSample(sample) {
         let alias = lastVowel + " " + matched
         push(sample, index, alias, false, false)
 
-        if (index === 0) {
+        if (lastVowel === "-") {
             // create "あ" from "- あ"
             push(sample, index, matched, true, false)
         }
@@ -129,7 +130,13 @@ function parseSample(sample) {
         index++
         lastVowel = vowelMap.get(matched)
         rest = rest.slice(matched.length)
-        if (separator !== "" && rest.startsWith(separator)) {
+        if (headSeparator !== "" && rest.startsWith(headSeparator)) {
+            let alias = lastVowel + " " + appendSuffix
+            push(sample, index, alias, false, false)
+            rest = rest.slice(headSeparator.length)
+            lastVowel = "-"
+            index++
+        } else if (separator !== "" && rest.startsWith(separator)) {
             rest = rest.slice(separator.length)
         }
     }

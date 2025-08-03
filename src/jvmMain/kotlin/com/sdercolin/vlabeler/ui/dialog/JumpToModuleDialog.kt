@@ -25,7 +25,6 @@ fun JumpToModuleDialog(
     finish: (JumpToModuleDialogResult?) -> Unit,
 ) {
     ModuleList(
-        viewConf = args.viewConf,
         project = args.project,
         jumpToModule = { index -> finish(JumpToModuleDialogResult(index)) },
     )

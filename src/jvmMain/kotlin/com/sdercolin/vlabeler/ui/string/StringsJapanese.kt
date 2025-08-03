@@ -108,6 +108,8 @@ fun Strings.ja(): String? = when (this) {
     CommonSelect -> "選択"
     CommonOpen -> "開く"
     CommonSave -> "保存"
+    CommonReset -> "リセット"
+    CommonClear -> "クリア"
     CommonInputErrorPromptNumber -> "数値を入力してください。"
     CommonInputErrorPromptInteger -> "整数を入力してください。"
     CommonInputErrorPromptNumberRange -> "%s から %s の間の数値を入力してください。"
@@ -195,9 +197,9 @@ fun Strings.ja(): String? = when (this) {
     EditEntryExtraDialogDescription -> "このエントリの追加情報の編集"
     EditModuleExtraDialogDescription -> "このサブプロジェクトの追加情報の編集"
     MoveEntryDialogDescription -> "エントリ「%1\$s」の新しいインデックスを入力してください (%2\$d ~ %3\$d)"
-    AskIfRemoveEntryDialogDescription -> "このエントリを削除します。"
+    AskIfRemoveEntryDialogDescription -> "エントリ「%s」を削除します。"
     AskIfRemoveEntryLastDialogDescription ->
-        "このエントリを削除します。\n" +
+        "エントリ「%s」を削除します。\n" +
             "このエントリはサンプルに紐付けられている唯一のエントリのため、削除すると、サンプルはプロジェクトから消えますが、" +
             "メニュー「表示」->「サンプルリスト」で確認・再度追加できます。"
     AskIfLoadAutoSavedProjectDialogDescription ->
@@ -256,10 +258,18 @@ fun Strings.ja(): String? = when (this) {
     EditorSubTitleMultiple -> "サンプル %2\$s の中の%1\$dエントリを編集"
     FailedToLoadSampleFileError ->
         "サンプルファイルを読み込めませんでした。存在しないか、サポートされていないフォーマットの可能性があります。"
-    PluginRuntimeUnexpectedException -> "プラグインの実行中に予期しないエラーが発生しました。プラグインの作者に連絡してください。"
+    PluginRuntimeUnexpectedException ->
+        "プラグインの実行中に予期しないエラーが発生しました。" +
+            "エラーログを添付し、プラグインの作者に連絡してください。"
+    FailedToCreateProjectException ->
+        "プロジェクトを作成できませんでした。お使いのラベラーまたはプラグインの設定を確認してください。" +
+            "問題が解決できない場合は、エラーログを添付し、ラベラーまたはプラグインの作者に連絡してください。"
     InvalidCreatedProjectException ->
         "作成したプロジェクトは無効です。お使いのラベラーまたはプラグインの設定を確認してください。" +
-            "問題が解決できない場合は、ラベラーまたはプラグインの作者に連絡してください。"
+            "問題が解決できない場合は、エラーログを添付し、ラベラーまたはプラグインの作者に連絡してください。"
+    FailedToCreateProjectNoSampleException ->
+        "サンプルディレクトリにサンプルファイルが見つからなかったため、" +
+            "プロジェクトを作成できませんでした。"
     InvalidOpenedProjectException -> "プロジェクトを開けませんでした。無効なデータが含まれています。詳細はエラーログを確認してください。"
     ProjectParseException ->
         "プロジェクトを開けませんでした。破損しているか、互換性のないのバージョンの vLabeler によって作られています。" +
@@ -283,7 +293,7 @@ fun Strings.ja(): String? = when (this) {
     QuickProjectBuilderRuntimeExceptionTemplate -> "クイック編集プロジェクトの作成中にエラーが発生しました：%s"
     PropertySetterRuntimeExceptionTemplate -> "プロパティの設定中にエラーが発生しました：%s"
     PropertySetterUnexpectedRuntimeException ->
-        "プロパティの設定中に予期しないエラーが発生しました。ラベラーの作者に連絡してください。"
+        "プロパティの設定中に予期しないエラーが発生しました。エラーログを添付し、ラベラーの作者に連絡してください。"
     LabelerManagerTitle -> "ラベラー"
     LabelerManagerImportDialogTitle -> "ラベラーをインポート"
     TemplatePluginManagerTitle -> "テンプレート生成器"
@@ -513,6 +523,15 @@ fun Strings.ja(): String? = when (this) {
     PreferencesEditorContinuousLabelNamesEditableBackgroundColor -> "編集時の背景の色"
     PreferencesEditorContinuousLabelNamesSize -> "サイズ"
     PreferencesEditorContinuousLabelNamesPosition -> "位置"
+    PreferencesEditorBorderHighlight -> "枠線のハイライト"
+    PreferencesEditorBorderHighlightDescription -> "エントリの枠線のハイライト（複数エントリ編集モードのみで有効）をカスタマイズします。"
+    PreferencesEditorHighlightCurrentEntryBorder -> "現在のエントリの枠線をハイライト"
+    PreferencesEditorHighlightCurrentEntryBorderDescription -> "複数エントリ編集モードで、エントリ一覧で現在選択されているエントリの枠線をハイライトします。"
+    PreferencesEditorHighlightCursorPositionEntryBorder -> "カーソル位置のエントリ枠線をハイライト"
+    PreferencesEditorHighlightCursorPositionEntryBorderDescription -> "複数エントリ編集モードで、カーソルの位置の該当するエントリの枠線をハイライトします。"
+    PreferencesEditorHighlightEntryBorderEnabled -> "有効"
+    PreferencesEditorHighlightEntryBorderColor -> "色"
+    PreferencesEditorHighlightEntryBorderWidth -> "幅"
     PreferencesPlayback -> "再生"
     PreferencesPlaybackDescription -> "音声再生の動作をカスタマイズします。"
     PreferencesPlaybackPlayOnDragging -> "プレビュー再生"
@@ -660,6 +679,8 @@ fun Strings.ja(): String? = when (this) {
     FilterDoneIgnored -> "完了状態でフィルターしない"
     FilterLink -> "フィルターをプロジェクトのナビゲーションにも使う"
     FilterLinked -> "フィルターはプロジェクトのナビゲーションにも使かわれている"
+    FilterAdvancedInUse -> "高度なフィルター"
+    FilterDisabledDueToAdvancedInUse -> "高度なフィルターが使用されているため、無効になります"
     ColorPickerDialogTitle -> "vLabeler - カラーピッカー"
     QuickLaunchManagerDialogTitle -> "プラグインスロット"
     QuickLaunchManagerDialogDescription ->
@@ -709,6 +730,8 @@ fun Strings.ja(): String? = when (this) {
         "vLabeler は Rosetta 2 互換モードで実行されています。\n" +
             "パフォーマンスを向上させるには、Apple Silicon 用のビルド（~mac-arm64.dmg）をお試しください。"
     EntryFilterSetterDialogTitle -> "フィルターの設定"
+    EntryFilterSetterDialogModeBasic -> "基本"
+    EntryFilterSetterDialogModeAdvanced -> "高度"
     EntryFilterSetterDialogHeaderAny -> "任意のテキストに"
     EntryFilterSetterDialogHeaderName -> "エントリ名に"
     EntryFilterSetterDialogHeaderSample -> "サンプル名に"
@@ -740,5 +763,18 @@ fun Strings.ja(): String? = when (this) {
     ReloadLabelDialogInheritNotesDescription ->
         "有効にすると、古いエントリと新しいエントリのすべての対応するエントリペアについて、" +
             "古いエントリの備考が新しいエントリにコピーされます。"
+    EditorContextActionOpenRenameEntryDialog -> "エントリの名前を編集..."
+    EditorContextActionOpenDuplicateEntryDialog -> "エントリを複製..."
+    EditorContextActionOpenRemoveEntryDialog -> "エントリを削除..."
+    EditorContextActionOpenMoveEntryDialog -> "エントリを移動..."
+    EditorContextActionCopyEntryName -> "エントリ名をクリップボードにコピー"
+    EditorContextActionFilterByEntryName -> "エントリ名でフィルター"
+    EditorContextActionCopySampleName -> "サンプル名をクリップボードにコピー"
+    EditorContextActionFilterBySampleName -> "サンプル名でフィルター"
+    EditorContextActionFilterByTag -> "タグでフィルター"
+    EditorContextActionFilterStarred -> "スターマークのあるエントリをフィルター"
+    EditorContextActionFilterUnstarred -> "スターマークのないエントリをフィルター"
+    EditorContextActionFilterDone -> "完了したエントリをフィルター"
+    EditorContextActionFilterUndone -> "未完了のエントリをフィルター"
     else -> null
 }

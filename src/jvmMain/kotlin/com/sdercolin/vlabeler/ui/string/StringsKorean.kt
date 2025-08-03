@@ -35,7 +35,7 @@ fun Strings.ko(): String? = when (this) {
     MenuEditToolsPlayback -> "재생"
     MenuEditRenameEntry -> "[이름 변경] 현재 엔트리 ..."
     MenuEditDuplicateEntry -> "[복제] 현재 엔트리..."
-    MenuEditRemoveEntry -> "[제거] 현재 엔트리"
+    MenuEditRemoveEntry -> "[제거] 현재 엔트리..."
     MenuEditMoveEntry -> "[옮기기] 현재 엔트리..."
     MenuEditToggleDone -> "[\"완료\" 표시] 현재 엔트리"
     MenuEditToggleStar -> "[\"중요\" 표시] 현재 엔트리"
@@ -107,6 +107,8 @@ fun Strings.ko(): String? = when (this) {
     CommonSelect -> "선택"
     CommonOpen -> "열기"
     CommonSave -> "저장"
+    CommonReset -> "초기화"
+    CommonClear -> "지우기"
     CommonInputErrorPromptNumber -> "숫자를 입력해 주세요."
     CommonInputErrorPromptInteger -> "정수값을 입력해 주세요."
     CommonInputErrorPromptNumberRange -> "%s ~ %s 사이의 숫자를 입력해 주세요."
@@ -199,9 +201,9 @@ fun Strings.ko(): String? = when (this) {
     EditEntryExtraDialogDescription -> "현재 엔트리의 추가 정보 편집"
     EditModuleExtraDialogDescription -> "현재 하위 프로젝트의 추가 정보 편집"
     MoveEntryDialogDescription -> "엔트리 \"%1\$s\"의 새로운 인덱스 입력 (%2\$d ~ %3\$d)"
-    AskIfRemoveEntryDialogDescription -> "현재 엔트리 삭제 중..."
+    AskIfRemoveEntryDialogDescription -> "엔트리 \"%s\" 삭제 중..."
     AskIfRemoveEntryLastDialogDescription ->
-        "현재 엔트리 삭제 중...\n" +
+        "엔트리 \"%s\" 삭제 중...\n" +
             "이 엔트리는 현재 샘플 파일에서 유일하게 참조되고 있던 엔트리에요.\n" +
             "나중에 이 샘플에 엔트리를 추가하려면, `외형` -> `샘플 목록`을 눌러 주세요."
     AskIfLoadAutoSavedProjectDialogDescription ->
@@ -259,11 +261,16 @@ fun Strings.ko(): String? = when (this) {
     FailedToLoadSampleFileError -> "샘플 파일을 불러오지 못했습니다.\n존재하지 않는 파일이거나 지원되지 않는 형식일 수 있습니다."
     PluginRuntimeUnexpectedException ->
         "플러그인 실행 도중 예상치 못한 오류가 발생했어요.\n" +
-            "자세한 내용은 플러그인 제작자에게 문의해 확인해 주세요."
+            "자세한 내용은 오류 로그를 함께 첨부하여 플러그인 제작자에게 문의해 주세요."
+    FailedToCreateProjectException ->
+        "프로젝트 생성에 실패했어요." +
+            "라벨러나 플러그인의 설정이 올바르게 되어 있는지 확인해 주세요. \n" +
+            "문제가 지속된다면, 오류 로그를 함께 첨부하여 해당 라벨러나 플러그인의 제작자에게 문의해 주세요."
     InvalidCreatedProjectException ->
         "생성된 프로젝트가 유효하지 않아요. " +
             "라벨러나 플러그인의 설정이 올바르게 되어 있는지 확인해 주세요. \n" +
-            "문제가 지속된다면, 해당 라벨러나 플러그인의 제작자에게 문의해 주세요."
+            "문제가 지속된다면, 오류 로그를 함께 첨부하여 해당 라벨러나 플러그인의 제작자에게 문의해 주세요."
+    FailedToCreateProjectNoSampleException -> "샘플 폴더에 샘플 파일이 없어요. 샘플 폴더를 확인해 주세요."
     InvalidOpenedProjectException ->
         "프로젝트를 열지 못했어요. 올바르지 않은 데이터가 포함되어 있는 것 같아요.\n" +
             "자세한 내용은 에러 로그를 통해 확인해 주세요."
@@ -286,7 +293,7 @@ fun Strings.ko(): String? = when (this) {
     PropertySetterRuntimeExceptionTemplate -> "항목 설정 도중 라벨러 런타임 오류: %s"
     PropertySetterUnexpectedRuntimeException ->
         "항목을 설정하는 도중 예상치 못한 오류가 발생했어요.\n" +
-            "자세한 내용은 라벨러 제작자에게 문의해 확인해 주세요."
+            "자세한 내용은 오류 로그를 함께 첨부하여 라벨러 제작자에게 문의해 주세요."
     VideoComponentInitializationException ->
         "영상 요소를 초기화하지 못했어요. 이 기능을 사용하려면 기기에 VLC가 설치되어 있어야 해요. " +
             "README의 `비디오 통합` 부분을 확인해 주세요."
@@ -540,6 +547,15 @@ fun Strings.ko(): String? = when (this) {
     PreferencesEditorContinuousLabelNamesEditableBackgroundColor -> "배경 색 (편집 시)"
     PreferencesEditorContinuousLabelNamesSize -> "크기"
     PreferencesEditorContinuousLabelNamesPosition -> "위치"
+    PreferencesEditorBorderHighlight -> "테두리 강조"
+    PreferencesEditorBorderHighlightDescription -> "다중 편집 모드에서 테두리 강조를 사용자 지정합니다."
+    PreferencesEditorHighlightCurrentEntryBorder -> "현재 항목의 테두리 강조"
+    PreferencesEditorHighlightCurrentEntryBorderDescription -> "다중 편집 모드에서 항목 목록에서 현재 선택된 항목의 테두리를 강조 표시합니다."
+    PreferencesEditorHighlightCursorPositionEntryBorder -> "커서 위치 항목의 테두리 강조"
+    PreferencesEditorHighlightCursorPositionEntryBorderDescription -> "다중 편집 모드에서 커서가 위치한 항목의 테두리를 강조 표시합니다."
+    PreferencesEditorHighlightEntryBorderEnabled -> "활성화"
+    PreferencesEditorHighlightEntryBorderColor -> "색상"
+    PreferencesEditorHighlightEntryBorderWidth -> "두께"
     PreferencesPlayback -> "재생"
     PreferencesPlaybackDescription -> "오디오 재생 동작을 커스텀합니다."
     PreferencesPlaybackPlayOnDragging -> "미리보기 재생"
@@ -683,6 +699,8 @@ fun Strings.ko(): String? = when (this) {
     FilterDoneIgnored -> "\"완료\" 필터 미적용"
     FilterLink -> "탐색에 필터 적용"
     FilterLinked -> "탐색에 적용된 필터들"
+    FilterAdvancedInUse -> "고급 필터"
+    FilterDisabledDueToAdvancedInUse -> "고급 필터가 사용되고 있어서 비활성화되었어요"
     ColorPickerDialogTitle -> "vLabeler - 색 팔레트"
     QuickLaunchManagerDialogTitle -> "플러그인 슬롯"
     QuickLaunchManagerDialogDescription ->
@@ -736,6 +754,8 @@ fun Strings.ko(): String? = when (this) {
         "vLabeler가 Rosetta 2 호환 모드로 실행되고 있어요.\n" +
             "더 나은 성능을 위해, 애플 실리콘 (~mac-arm64.dmg) 버전을 다운로드해 사용해 주세요."
     EntryFilterSetterDialogTitle -> "필터 설정"
+    EntryFilterSetterDialogModeBasic -> "기본"
+    EntryFilterSetterDialogModeAdvanced -> "고급"
     EntryFilterSetterDialogHeaderAny -> "다음을 포함하는 모든 텍스트"
     EntryFilterSetterDialogHeaderName -> "다음을 포함하는 엔트리"
     EntryFilterSetterDialogHeaderSample -> "이름에 다음을 포함하는 샘플"
@@ -763,5 +783,18 @@ fun Strings.ko(): String? = when (this) {
     ReloadLabelDialogInheritNotes -> "노트들 상속하기"
     ReloadLabelDialogInheritNotesDescription ->
         "활성화 시, 해당하는 모든 엔트리 쌍에 대해 이전 엔트리의 노트들이 새 엔트리로 복사됩니다."
+    EditorContextActionOpenRenameEntryDialog -> "항목 이름 변경..."
+    EditorContextActionOpenDuplicateEntryDialog -> "항목 복제..."
+    EditorContextActionOpenRemoveEntryDialog -> "항목 제거..."
+    EditorContextActionOpenMoveEntryDialog -> "항목 이동 대상 선택..."
+    EditorContextActionCopyEntryName -> "항목 이름을 클립보드에 복사"
+    EditorContextActionFilterByEntryName -> "항목 이름으로 필터"
+    EditorContextActionCopySampleName -> "샘플 이름을 클립보드에 복사"
+    EditorContextActionFilterBySampleName -> "샘플 이름으로 필터"
+    EditorContextActionFilterByTag -> "태그 값으로 필터"
+    EditorContextActionFilterStarred -> "즐겨찾기된 항목만 필터"
+    EditorContextActionFilterUnstarred -> "즐겨찾기되지 않은 항목만 필터"
+    EditorContextActionFilterDone -> "완료된 항목만 필터"
+    EditorContextActionFilterUndone -> "미완료 항목만 필터"
     else -> null
 }

@@ -94,11 +94,11 @@ interface AppDialogState {
     fun openJumpToEntryDialog()
     fun openJumpToModuleDialog()
     fun openEditEntryNameDialog(index: Int, purpose: InputEntryNameDialogPurpose)
-    fun openMoveCurrentEntryDialog(appConf: AppConf)
+    fun openMoveEntryDialog(index: Int, appConf: AppConf)
     fun openEditEntryExtraDialog(index: Int)
     fun openEditModuleExtraDialog()
     fun askIfSaveBeforeExit()
-    fun confirmIfRemoveCurrentEntry(isLastEntry: Boolean)
+    fun confirmIfRemoveEntry(index: Int, name: String, isLastEntry: Boolean)
     fun confirmIfLoadAutoSavedProject(file: File)
     fun confirmIfRedirectSampleDirectory(currentDirectory: File)
     fun confirmIfRemoveCustomizableItem(state: CustomizableItemManagerDialogState<*>, item: CustomizableItem)
@@ -336,7 +336,7 @@ class AppDialogStateImpl(
 
     override fun openEditEntryNameDialog(index: Int, purpose: InputEntryNameDialogPurpose) {
         val project = projectStore.requireProject()
-        val entry = project.currentModule.entries[index]
+        val entry = project.currentModule.entries.getOrNull(index) ?: return
         val invalidOptions = if (project.labelerConf.allowSameNameEntry) {
             listOf()
         } else {
@@ -354,12 +354,12 @@ class AppDialogStateImpl(
         )
     }
 
-    override fun openMoveCurrentEntryDialog(appConf: AppConf) {
+    override fun openMoveEntryDialog(index: Int, appConf: AppConf) {
         val project = projectStore.requireProject()
         val module = project.currentModule
         val args = MoveEntryDialogArgs(
             entries = module.entries,
-            currentIndex = module.currentIndex,
+            currentIndex = index,
             viewConf = appConf.view,
         )
         openEmbeddedDialog(args)
@@ -396,8 +396,8 @@ class AppDialogStateImpl(
 
     override fun askIfSaveBeforeExit() = openEmbeddedDialog(AskIfSaveDialogPurpose.IsExiting)
 
-    override fun confirmIfRemoveCurrentEntry(isLastEntry: Boolean) =
-        openEmbeddedDialog(CommonConfirmationDialogAction.RemoveCurrentEntry(isLastEntry))
+    override fun confirmIfRemoveEntry(index: Int, name: String, isLastEntry: Boolean) =
+        openEmbeddedDialog(CommonConfirmationDialogAction.RemoveEntry(index, name, isLastEntry))
 
     override fun confirmIfLoadAutoSavedProject(file: File) =
         openEmbeddedDialog(CommonConfirmationDialogAction.LoadAutoSavedProject(file))

@@ -2,6 +2,10 @@
 
 The number after `v` is included in the project file as `version` field.
 
+#### v4
+
+- Move Module.entryFilter to Project.entryFilter, and add some contents to it.
+
 #### v3
 
 - Make `rootSampleDirectory` non-null.
